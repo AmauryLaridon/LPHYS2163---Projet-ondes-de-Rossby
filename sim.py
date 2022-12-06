@@ -44,17 +44,22 @@ def psi_init():
 def vort_init():
     """Donne la composante verticale de la vorticité relative en fonction de la fonction de courant initiale à l'aide de l'équation (2)"""
     vort = np.zeros((N, M))
-    vort[-1, :] = vort[0, :]  # conditions aux bords périodiques : le Sud du domaine = le Nord du domaine
-    vort[:, 0] = vort[:, -1]  # conditions aux bords périodiques : l'Ouest du domaine = l'Est du domaine
     psi_0 = psi_init()
-    for i in range(N):
-        print(i)
-        for j in range(M):
-            print(j)
-            vort[i][j] = (1/(Delta_s**2))*(-4*psi_0[i][j]+psi_0[i+1]
-                                           [j]+psi_0[i-1][j]+psi_0[i][j+1]+psi_0[i][j-1])
+    for i in range(N-1):
+        #print("i = ", i)
+        for j in range(M-1):
+            #print("j = ", j)
+            if i == 0:
+                # conditions aux bords périodiques : le Nord du domaine = le Sud du domaine
+                vort[0, :] = vort[-1, :]
+            elif j == 0:
+                # conditions aux bords périodiques : l'Ouest du domaine = l'Est du domaine
+                vort[:, 0] = vort[:, -1]
+            else:
+                vort[i, j] = (1/(Delta_s**2))*(-4*psi_0[i, j]+psi_0[i+1, j] +
+                                               psi_0[i-1, j]+psi_0[i, j+1]+psi_0[i, j-1])
+                #print("vort({},{}) =".format(i, j), vort[i, j])
     return vort
-    # vort = (1/(Delta_s**2))*(-4*psi_0+psi_0[])
 
 
 vort_init()
@@ -68,6 +73,16 @@ X, Y = np.meshgrid(x, y)
 plt.contourf(X, Y, psi_init(), 100)
 plt.colorbar()
 plt.title("Contour plot de la fonction de courant initiale $\psi_0(x,y)$ \n $L_x = {}, L_y = {}, \Delta_s = {}, W_x = {}, W_y = {}$".format(
+    L_x, L_y, Delta_s, W_x, W_y), fontsize=16)
+plt.legend(loc='best', shadow=True, fontsize="large")
+plt.xlabel("$x$", fontsize=20)
+plt.ylabel("$y$", fontsize=20)
+plt.show()
+
+# Contourplot de la composante verticale de la vorticité relative initiale
+plt.contourf(X, Y, vort_init(), 100)
+plt.colorbar()
+plt.title("Contour plot de $\zeta_0(x,y)$ \n $L_x = {}, L_y = {}, \Delta_s = {}, W_x = {}, W_y = {}$".format(
     L_x, L_y, Delta_s, W_x, W_y), fontsize=16)
 plt.legend(loc='best', shadow=True, fontsize="large")
 plt.xlabel("$x$", fontsize=20)
