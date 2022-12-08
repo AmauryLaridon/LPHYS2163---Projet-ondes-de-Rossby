@@ -5,15 +5,15 @@ import numpy as np
 ###################################################### Paramètres de la simulation ##################################################
 
 phi_0 = ((2*np.pi)/360)*45  # latitude en radian
-Delta_s = 200  # résolution de la maille spatiale
-Delta_t = 1  # résolution de la maille temporelle
-T = 360  # temps total de simulation
-L_x = 12000  # longueur du domaine selon x
-L_y = 6000  # longueur du domaine selon y en km
+Delta_s = 200000  # résolution de la maille spatiale en mètre
+Delta_t = 1  # résolution de la maille temporelle en seconde
+T = 360  # temps total de simulation en seconde
+L_x = 12000000  # longueur du domaine selon x en mètre
+L_y = 6000000  # longueur du domaine selon y en mètre
 M = int(L_x/Delta_s)  # nombre d'itération selon x
 N = int(L_y/Delta_s)  # nombre d'itération selon x
-W_x = 6000  # longueurs d'onde champ initial selon x
-W_y = 3000  # longueurs d'onde champ initial selon y
+W_x = 6000000  # longueurs d'onde champ initial selon x en mètre
+W_y = 3000000  # longueurs d'onde champ initial selon y en mètre
 Omega = 7.292115*10**(-5)  # vitesse angulaire de la rotation de la Terre
 g = 9.81  # norme de l'accélaration gravitationnelle
 
@@ -67,8 +67,8 @@ def vort_init():
                 # conditions aux bords périodiques : l'Est du domaine = l'Ouest du domaine
                 vort[:, M-1] = vort[:, 0]
             else:
-                vort[i, j] = (1/(Delta_s**2))*(-4*psi_0[i, j]+psi_0[i+1, j] +
-                                               psi_0[i-1, j]+psi_0[i, j+1]+psi_0[i, j-1])
+                vort[i, j] = (1/(Delta_s**2))*(-4*psi_0[i, j]+psi_0[i, j+1] +
+                                               psi_0[i, j-1]+psi_0[i+1, j]+psi_0[i-1, j])
                 # print("vort({},{}) =".format(i, j), vort[i, j])
     return vort
 
@@ -91,8 +91,8 @@ def velocity_field():
                 u[:, M-1] = u[:, 0]
                 v[:, M-1] = v[:, 0]
             else:
-                u[i, j] = (-1/(2*Delta_s))*(psi_0[i, j+1]-psi_0[i, j-1])
-                v[i, j] = (1/(2*Delta_s))*(psi_0[i+1, j]-psi_0[i-1, j])
+                u[i, j] = (-1/(2*Delta_s))*(psi_0[i+1, j]-psi_0[i-1, j])
+                v[i, j] = (1/(2*Delta_s))*(psi_0[i, j+1]-psi_0[i, j-1])
     return [u, v]
 
 
@@ -108,21 +108,23 @@ print("Résolution numérique avec une grille temporelle de {} points".format(le
 X, Y = np.meshgrid(x, y)
 plt.contourf(X, Y, psi_init(), 100)
 plt.colorbar()
-plt.title("Contour plot de la fonction de courant initiale $\psi_0(x,y)$ \n $L_x = {}, L_y = {}, \Delta_s = {}, W_x = {}, W_y = {}$".format(
-    L_x, L_y, Delta_s, W_x, W_y), fontsize=16)
+plt.title("Contour plot de la fonction de courant initiale $\psi_0(x,y)$ \n $L_x = {}km, L_y = {}km, \Delta_s = {}km, W_x = {}km, W_y = {}km$ ".format(
+    int(L_x/1000), int(L_y/1000), int(Delta_s/1000), int(W_x/1000), int(W_y/1000)), fontsize=13)
 plt.legend(loc='best', shadow=True, fontsize="large")
 plt.xlabel("$x$", fontsize=20)
 plt.ylabel("$y$", fontsize=20)
+plt.tight_layout()
 plt.show()
 
 # Contourplot de la composante verticale de la vorticité relative initiale
 plt.contourf(X, Y, vort_init(), 100)
 plt.colorbar()
-plt.title("Contour plot de $\zeta_0(x,y)$ \n $L_x = {}, L_y = {}, \Delta_s = {}, W_x = {}, W_y = {}$".format(
-    L_x, L_y, Delta_s, W_x, W_y), fontsize=16)
+plt.title("Contour plot de $\zeta_0(x,y)$ \n $L_x = {}km, L_y = {}km, \Delta_s = {}km, W_x = {}km, W_y = {}km$ ".format(
+    int(L_x/1000), int(L_y/1000), int(Delta_s/1000), int(W_x/1000), int(W_y/1000)), fontsize=13)
 plt.legend(loc='best', shadow=True, fontsize="large")
 plt.xlabel("$x$", fontsize=20)
 plt.ylabel("$y$", fontsize=20)
+plt.tight_layout()
 plt.show()
 
 
@@ -130,17 +132,19 @@ plt.show()
 
 U = velocity_field()[0]
 V = velocity_field()[1]
+zero = np.zeros((N, M))
 slice_interval = 1  # Slicer index for smoother quiver function
 skip = (slice(None, None, slice_interval), slice(None, None, slice_interval))
 vels = np.hypot(U, V)  # Velocity norm of each velocity vector
 Quiver = plt.quiver(X[skip], Y[skip], U[skip], V[skip], vels[skip],
-                    units='height', angles='xy', scale=350000)
+                    units='height', angles='xy')
 plt.colorbar(Quiver)
 # plt.quiverkey(Quiver, 1.01, 1.01, 30000, label="?m/s",
 # labelcolor = 'blue', labelpos = 'N', coordinates = "axes")
-plt.title("Champ de vitesse initial $(u_0(x,y),v_0(x,y))$ \n $L_x = {}, L_y = {}, \Delta_s = {}, W_x = {}, W_y = {}$".format(
-    L_x, L_y, Delta_s, W_x, W_y), fontsize=16)
+plt.title("Champ de vitesse initial $(u_0(x,y),v_0(x,y))$ \n $L_x = {}km, L_y = {}km, \Delta_s = {}km, W_x = {}km, W_y = {}km$ ".format(
+    int(L_x/1000), int(L_y/1000), int(Delta_s/1000), int(W_x/1000), int(W_y/1000)), fontsize=13)
 plt.legend(loc='best', shadow=True, fontsize="large")
 plt.xlabel("$x$", fontsize=20)
 plt.ylabel("$y$", fontsize=20)
+plt.tight_layout()
 plt.show()
