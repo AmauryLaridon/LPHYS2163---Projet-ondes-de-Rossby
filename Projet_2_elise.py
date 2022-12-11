@@ -1,11 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Dec  7 18:35:18 2022
-
-@author: elise
-"""
-
-
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
