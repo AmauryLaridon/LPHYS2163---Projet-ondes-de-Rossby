@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
+
 # Variables------------------------------------------------------------------
 L_x=12000000
 L_y=6000000
