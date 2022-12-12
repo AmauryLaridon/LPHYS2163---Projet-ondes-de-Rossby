@@ -38,65 +38,9 @@ def f_0_scal():
     return 2*Omega*np.sin(phi_0)
 
 
-def f_0_tabl():
-    """Donne la valeur du paramètre de Coriolis f_0 à phi_0 fixé en un tableau sur toute la maille"""
-    F_0 = np.full((N, M), f_0_scal())
-    return F_0
-
-
 def beta_scal(phi):
     """Donne la valeur du paramètre beta pour une valeur de latitude phi donnée"""
     return (2*Omega*np.cos(phi)/a)
-
-
-# doit encore être transformer pour donner une valeur sur toute la maille dépendante de la latitude.
-def beta_grid():
-    """Donne la valeur du paramètre beta pour une valeur de phi_0 dépendant de la grille"""
-    dphi = Delta_s/a
-    beta_grid = np.zeros((N, M))
-    beta_grid[int(N/2), :] = beta_scal(phi_0)
-    phi_i = phi_0
-    for i in range(1, int(N/2)+1):
-        print(i)
-        phi_i = phi_i + dphi
-        beta_grid[-i, :] = beta_scal(phi_i)
-    return beta_grid
-
-
-X, Y = np.meshgrid(x, y)
-b = beta_grid()
-print(b[0])
-plt.contourf(X, Y, b)
-plt.colorbar()
-plt.show()
-
-
-def pos_y():
-    """Donne la composante verticale y pour chaque point de la maille"""
-    y_axis = np.arange(-(N/2)*Delta_s, (N/2)*Delta_s, Delta_s)
-    y_label = np.zeros((N, M))
-    Y = np.full((N, M), 1)
-    for i in range(N):
-        for j in range(M):
-            y_label[i, j] = Y[i, j]*y_axis[i]*(-1)
-    return y_label
-
-
-def f():
-    """Donne la valeur du paramètre de Coriolis dans l'approximation du plan beta en fonction de la position"""
-    f = np.zeros((N, M))
-    f = f_0_tabl()+beta()*pos_y()
-    return f
-
-
-# print(beta())
-# print(f_0()[9, 5])
-# print(y())
-# print("f_0 = ", f_0())
-# print("beta fois y = ", beta()*y())
-# print("f =", f_0() + beta()*y())
-f_value = f()
-# print(f[-1])
 
 
 def psi_init():
@@ -106,7 +50,6 @@ def psi_init():
     psi_0_T = np.zeros((N, M))
     psi_0_T = (g/f_0_scal())*(100*np.sin(k*(x_grid.T))@(np.cos(j*y_grid)))
     psi_0 = psi_0_T.T
-    print(np.shape(psi_0))
     return psi_0
 
 
@@ -164,8 +107,6 @@ def vort_flux(u, v, zeta):
     Prend comme argument la matrice de la composante selon x du champ de vitesse, puis la matrice de la composante y du champs de vitesse
     , la matrice de la composante verticale de la vorticité relative."""
     F = np.zeros((N, M))
-    beta = np.zeros((N, M))
-    beta_grid = beta()
     for i in range(N):
         # print("i = ", i)
         for j in range(M):
@@ -178,16 +119,30 @@ def vort_flux(u, v, zeta):
                 F[:, M-1] = F[:, 0]
             else:
                 F[i, j] = (1/(2*Delta_s))*((zeta[i, j+1]*u[i, j+1]-zeta[i, j-1]*u[i, j-1]
-                                            ) + (zeta[i+1, j]*v[i+1, j] - zeta[i-1, j]*v[i-1, j])) + beta_grid[i, j]*v[i, j]
+                                            ) + (zeta[i+1, j]*v[i+1, j] - zeta[i-1, j]*v[i-1, j])) + beta_scal(phi_0)*v[i, j]
     return F
 
 
+"""
 def poisson():
-    return []
 
+    def B(M):
+
+    C = (-4)*np.eye(M)+np.diag(np.ones(M-1), 1)+np.diag(np.ones(M-1), -1)
+
+    BB = np.kron(np.eye(M), C)+np.kron(np.diag(np.ones(M-1), 1), np.eye(M)) + \
+        np.kron(np.diag(np.ones(M-1), -1), np.eye(M))
+    return BB
+
+    U = np.zeros((M+2, M+2))
+    UU = np.linalg.solve(B(M), F)
+    U[1:-1, 1:-1] = UU.reshape(M, M)
+
+    return []
+"""
 ###################################################### Intégration temporelle ############################################################
 
-
+"""
 def vort_dynamic():
     stream_func_dyn = np.zeros((N, M, K))
     U = np.zeros((N, M, K))
@@ -211,7 +166,7 @@ def vort_dynamic():
 
 
 solution = vort_dynamic()
-
+"""
 ###################################################### Résultats et figures ############################################################
 # Output de la résolution des mailles
 print("-----------------------------------------------------------------------------------------------")
@@ -264,16 +219,4 @@ plt.legend(loc='best', shadow=True, fontsize="large")
 plt.xlabel("$x$", fontsize=20)
 plt.ylabel("$y$", fontsize=20)
 plt.tight_layout()
-plt.show()
-
-# Plot du champ du paramètre de Coriolis
-
-F = f()
-plt.contourf(X, Y, F, 100)
-plt.colorbar()
-plt.title("Valeur du paramètre de Coriolis f dans l'approximation du plan \beta \n f = f_0 + \beta y", fontsize=11)
-plt.xlabel("$x$", fontsize=15)
-plt.ylabel("$y$", fontsize=15)
-plt.tight_layout()
-plt.grid()
 plt.show()
