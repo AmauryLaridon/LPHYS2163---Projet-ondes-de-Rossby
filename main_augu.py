@@ -11,7 +11,8 @@ f_0 = 2 * omega * math.sin(math.pi/4)
 k = (2 * math.pi)/(Lx/2)
 j = (2 * math.pi)/(Ly/2)
 g = 9.81
-earth_radius = 6371000000 #rayon de la terre en m
+rayon_terre = 6371000000 
+beta = 2*omega*math.cos(math.pi/4)/rayon_terre
 M = int(Lx/delta_s)
 N = int(Ly/delta_s)
 
@@ -19,54 +20,28 @@ xvalues, yvalues = np.meshgrid(np.arange(0,Lx,delta_s),np.arange(0,Ly,delta_s)) 
 
 ########## - Définition des fonctions - ###########
 
-
 def current_flux(zeta, u, v):
-	beta = 2*omega*math.cos(math.pi/4)/earth_radius
+
 	current_flux = np.zeros((N,M))
 	for i in range(N):
 		for l in range(M):
-			if i != N - 1 and l != M - 1:
-				current_flux[i,l] = (1/(2*delta_s))*(zeta[i,l+1]*u[i,l+1] - zeta[i,l-1]*u[i,l-1] + zeta[i+1,l]*v[i+1,l] - zeta[i-1,l]*v[i-1,l]) + beta * v[i,l]
+			current_flux[i,l] = (1/(2*delta_s))*(zeta[i,(l+1)%M]*u[i,(l+1)%M] - zeta[i,l-1]*u[i,l-1] + zeta[(i+1)%N,l]*v[(i+1)%N,l] - zeta[i-1,l]*v[i-1,l]) + beta * v[i,l]
 			
-			# Périodicité
-			if i == N - 1:
-				current_flux[i,l] = u[0,l]
-			if l == M - 1:
-				current_flux[i,l] = u[i,0]
-			if i == N - 1 and l == M - 1:
-				current_flux[i,l] = current_flux[0,0]
 	return current_flux
 
 def u(psi):
 	u = np.zeros((N,M))
 	for i in range(N):
 		for l in range(M):
-			if i != N - 1 and l != M - 1:
-				u[i,l] = (-1/(2*delta_s))*(psi[i+1,l] - psi[i-1,l])
-
-			# Périodicité
-			if i == N - 1:
-				u[i,l] = u[0,l]
-			if l == M - 1:
-				u[i,l] = u[i,0]
-			if i == N - 1 and l == M - 1:
-				u[i,l] = u[0,0]
+			u[i,l] = (-1/(2*delta_s))*(psi[(i+1)%N,l] - psi[i-1,l])
 	return u
 
 def v(psi):
 	v = np.zeros((N,M))
 	for i in range(N):
 		for l in range(M):
-			if i != N - 1 and l != M - 1:
-				v[i,l] = (1/(2*delta_s))*(psi[i,l+1] - psi[i,l-1])
+			v[i,l] = (1/(2*delta_s))*(psi[i,(l+1)%M] - psi[i,l-1])
 
-			# Périodicité
-			if i == N - 1:
-				v[i,l] = v[0,l]
-			if l == M - 1:
-				v[i,l] = v[i,0]
-			if i == N - 1 and l == M - 1:
-				v[i,l] = v[0,0]
 	return v
 
 def zeta_init(psi):
@@ -74,15 +49,8 @@ def zeta_init(psi):
 	for i in range(N):
 		for l in range(M):			
 			if i != N - 1 and l != M - 1:
-				zeta[i,l] = (1/(delta_s**2)) * (-4 * psi[i,l] + psi[i+1 , l] + psi[i-1 , l] + psi[i , l+1] + psi[i , l-1]) 
+				zeta[i,l] = (1/(delta_s**2)) * (-4 * psi[i,l] + psi[(i+1)%N , l] + psi[i-1 , l] + psi[i , (l+1)%M] + psi[i , l-1]) 
 
-			# Périodicité
-			if i == N - 1:
-				zeta[i,l] = zeta[0,l]
-			if l == M - 1:
-				zeta[i,l] = zeta[i,0]
-			if i == N - 1 and l == M - 1:
-				zeta[i,l] = zeta[0,0]
 	return zeta
 
 def zeta(F,zeta):
@@ -125,8 +93,10 @@ def psi(zeta):
 		for l in range(M):
 			zeta_col[l+i*M,0] = zeta[i,l]
 
-	# Ici intervient notre matrice A.
+	 
 	"""
+	Ici intervient notre matrice A définie plus haut.
+
 	En définissant psi_col par rapport au tableau psi de la même manière que l'on a définit zeta_col par rapprot à zeta
 	notre système est donc donné par A psi_col = delta_s^2 zeta_col et sa solution est trouvée en inversant la matrice A
 	psi_col = A_inv delta_s^2 zeta_col.
@@ -173,7 +143,7 @@ delta_t = 3600 * delta_t_en_heure #passage au SI
 temps_integration = 60 * 60 * 24 * temps_integration_en_jour #passage au SI
 nb_pas_de_temps = int(temps_integration/delta_t)
 
-#à chaque itération du temps le résultat sera ajouté en dernière place de ces vecteurs.
+# à chaque itération du temps le résultat sera ajouté en dernière place de ces vecteurs.
 
 
 for t in range(nb_pas_de_temps):
