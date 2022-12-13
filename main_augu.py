@@ -19,7 +19,11 @@ N = int(Ly/delta_s)
 xvalues, yvalues = np.meshgrid(np.arange(0,Lx,delta_s),np.arange(0,Ly,delta_s)) #Crée deux tableaux de 30 pour 60, l'un avec les valeurs de x et l'autre de y
 
 ########## - Définition des fonctions - ###########
-
+"""
+Note sur la périodicité:
+	Les modules (%) sont utilisés pour faire la périodicité aux bords. Ainsi pour un psi situé par exemple sur le bord est il prendra en compte pour son calcul
+son voisin fictif situé sur le bord ouest.
+"""
 def current_flux(zeta, u, v):
 
 	current_flux = np.zeros((N,M))
@@ -75,8 +79,6 @@ On veut sur chaque ligne ajouter un terme "1" correspondant à l'emplacement des
 	- Deux 1 à gauche et à droite de la diagonale, respectivement pour psi_i,j+1 et psi_i,j-1
 	- Deux 1 à une distance M de la diagonale pour psi_i+1,j et psi_i-1,j
 
-Les modules (%) sont utilisés pour faire la périodicité aux bords. Ainsi pour un psi situé par exemple sur le bord est il prendra en compte pour son calcul
-son voisin fictif situé sur le bord ouest.
 """
 for i in range(N*M):
 	A[i,(i+1)%(N*M)] = 1
