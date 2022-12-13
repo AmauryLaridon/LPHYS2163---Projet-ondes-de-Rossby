@@ -106,6 +106,9 @@ A = -4*np.eye(N*M)
 On veut sur chaque ligne ajouter un terme "1" correspondant à l'emplacement des 4 valeurs adjacentes de psi_i,j. On a donc
 	- Deux 1 à gauche et à droite de la diagonale, respectivement pour psi_i,j+1 et psi_i,j-1
 	- Deux 1 à une distance M de la diagonale pour psi_i+1,j et psi_i-1,j
+
+Les modules (%) sont utilisés pour faire la périodicité aux bords. Ainsi pour un psi situé par exemple sur le bord est il prendra en compte pour son calcul
+son voisin fictif situé sur le bord ouest.
 """
 for i in range(N*M):
 	A[i,(i+1)%(N*M)] = 1
@@ -122,12 +125,11 @@ def psi(zeta):
 		for l in range(M):
 			zeta_col[l+i*M,0] = zeta[i,l]
 
-	# On définit une matrice colonne psi de taille égale
-	psi_col = np.zeros((N*M,1))
 	# Ici intervient notre matrice A.
 	"""
-	Notre système est donc donné par A psi_col = delta_s zeta_col et sa solution est trouvée en inversant la matrice A
-	psi = A^-1 delta_s zeta_col.
+	En définissant psi_col par rapport au tableau psi de la même manière que l'on a définit zeta_col par rapprot à zeta
+	notre système est donc donné par A psi_col = delta_s^2 zeta_col et sa solution est trouvée en inversant la matrice A
+	psi_col = A_inv delta_s^2 zeta_col.
 	"""
 	psi_col = delta_s**2 * np.dot(A_inv,zeta_col)
 
@@ -185,9 +187,9 @@ for t in range(nb_pas_de_temps):
 		zeta_tot.append(np.zeros((N,M)))
 		for i in range(N):
 			for l in range(M):
-				zeta_tot[-1][i,l] = - F_tot[-1][i,l] * delta_t + zeta_tot[-2][i,l]
+				zeta_tot[-1][i,l] = - F_tot[-1][i,l] * delta_t + zeta_0[i,l]
 
-		psi_tot = [psi_0]
+		psi_tot = [psi(zeta_tot[-1])]
 
 	else:
 		u_tot.append(u(psi_tot[-1]))
@@ -212,8 +214,5 @@ for t in range(nb_pas_de_temps):
 		quiver(xvalues,yvalues,u_tot[-1],v_tot[-1])
 		colorbar()
 		show()
-
-
-#################### - Plot - #####################
 
 
