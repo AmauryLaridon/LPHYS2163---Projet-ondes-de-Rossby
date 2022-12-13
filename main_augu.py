@@ -96,7 +96,7 @@ def zeta(F,zeta):
 
 """
 	Ici on définit une grande matrice A qui est utile pour la fonction psi(zeta) utilisée juste après. On la définit ici car 
-	la fonction sera utilisée de nombreuse fois et recrée cette matrice à chaque fois prendrait beaucoup de temps
+	la fonction sera utilisée de nombreuse fois et recrée cette matrice et l'inverser à chaque fois prendrait beaucoup de temps
 	de calcul pour rien. Notez que les commentaires ajoutés au cours de la création de la matrice sont à comprendre 
 	dans le contexte de la fonction psi(zeta) ci-dessous
 """
@@ -112,6 +112,7 @@ for i in range(N*M):
 	A[i,i-1] = 1
 	A[i,(i+M)%(N*M)] = 1		
 	A[i,i-M] = 1
+A_inv = np.linalg.inv(A)
 
 
 def psi(zeta):
@@ -128,7 +129,7 @@ def psi(zeta):
 	Notre système est donc donné par A psi_col = delta_s zeta_col et sa solution est trouvée en inversant la matrice A
 	psi = A^-1 delta_s zeta_col.
 	"""
-	psi_col = delta_s**2 * np.dot(np.linalg.inv(A),zeta_col)
+	psi_col = delta_s**2 * np.dot(A_inv,zeta_col)
 
 	# Pour finir il faut remettre psi en forme de tableau pour que ce soit cohérent avec le reste de l'implémentation.
 	psi = np.zeros((N,M))
@@ -211,4 +212,8 @@ for t in range(nb_pas_de_temps):
 		quiver(xvalues,yvalues,u_tot[-1],v_tot[-1])
 		colorbar()
 		show()
+
+
+#################### - Plot - #####################
+
 
