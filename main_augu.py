@@ -51,9 +51,8 @@ def v(psi):
 def zeta_init(psi):
 	zeta = np.zeros((N,M))
 	for i in range(N):
-		for l in range(M):			
-			if i != N - 1 and l != M - 1:
-				zeta[i,l] = (1/(delta_s**2)) * (-4 * psi[i,l] + psi[(i+1)%N , l] + psi[i-1 , l] + psi[i , (l+1)%M] + psi[i , l-1]) 
+		for l in range(M):
+			zeta[i,l] = (1/(delta_s**2)) * (-4 * psi[i,l] + psi[(i+1)%N , l] + psi[i-1 , l] + psi[i , (l+1)%M] + psi[i , l-1]) 
 
 	return zeta
 
