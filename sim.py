@@ -213,7 +213,7 @@ print("Résolution numérique avec une maille spatiale de {}x{} points".format(
 print("Résolution numérique avec une maille temporelle de {} points".format(K))
 print("-----------------------------------------------------------------------------------------------")
 
-# Contourplot de la fonction de courant initiale
+########## Contourplot de la fonction de courant initiale ############
 """
 X, Y = np.meshgrid(x, y)
 plt.contourf(X, Y, psi_init(), 100)
@@ -226,7 +226,7 @@ plt.ylabel("$y$", fontsize=20)
 plt.tight_layout()
 # plt.show()
 
-# Contourplot de la composante verticale de la vorticité relative initiale
+######### Contourplot de la composante verticale de la vorticité relative initiale ##########
 plt.contourf(X, Y, vort_init(), 100)
 plt.colorbar()
 plt.title("Contour plot de $\zeta_0(x,y)$ \n $L_x = {}km, L_y = {}km, \Delta_s = {}km, W_x = {}km, W_y = {}km$ ".format(
@@ -238,7 +238,7 @@ plt.tight_layout()
 # plt.show()
 
 
-# Plot du champ de vitesse initial
+########### Plot du champ de vitesse initial ############
 
 U = velocity_field(psi_init())[0]
 V = velocity_field(psi_init())[1]
@@ -258,8 +258,44 @@ plt.xlabel("$x$", fontsize=20)
 plt.ylabel("$y$", fontsize=20)
 plt.tight_layout()
 # plt.show()
+
+################################ Plot et animation solution intégrée dans le temps ###################################
 """
-# Subplot des intégrations temporelles
+solution = vort_dynamic()
+vort_dyn = solution[0]
+U = solution[1]
+V = solution[2]
+stream_func_dyn = solution[3]
+
+X, Y = np.meshgrid(x, y)
+
+###################### Plot dynamique animé du champ de vitesse ########################
+fig, ax = plt.subplots(1, 1)
+u_anim = U[:, :, 0]
+v_anim = V[:, :, 0]
+Q = ax.quiver(X, Y, u_anim, v_anim, pivot='mid', color='b')
+
+
+def update_quiver(num, Q, x, y):
+    if num == K:
+        plt.pause(100)
+    print(num)
+    u_anim = U[:, :, num]
+    v_anim = V[:, :, num]
+    nbr_heures = (num*Delta_t)/60
+    plt.title('t = {} heures'.format(num*nbr_heures))
+
+    Q.set_UVC(u_anim, v_anim)
+    return Q,
+
+
+anim = animation.FuncAnimation(fig, update_quiver, fargs=(Q, X, Y), interval=50, blit=False)
+fig.tight_layout()
+plt.show()
+
+"""
+
+############ Subplot des intégrations temporelles version non animée et pas quali #########
 solution = vort_dynamic()
 vort_dyn = solution[0]
 U = solution[1]
@@ -294,7 +330,7 @@ for t in range(K):
 
     plt.show()
 
-"""
+######################## Début test animation cfr vidéo youtube ####################
 fig = plt.figure(figsize=[16/1.3, 9/1.3])
 ax_stream_func = plt.subplot2grid((2, 2), (0, 0))
 ax_U = plt.subplot2grid((2, 2), (0, 1))
@@ -314,6 +350,7 @@ ani = animation.FuncAnimation(fig, animate, frames=500, blit=True, interval=1000
 
 plt.show()
 
+############# Première version manuelle affichage ################
 for t in range(K):
     print("itérations = ", t)
     plt.pause(0.01)
