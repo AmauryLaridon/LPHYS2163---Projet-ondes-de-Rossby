@@ -2,10 +2,14 @@ import numpy as np
 import random as rand
 import math
 from pylab import *
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+import matplotlib.animation as animation
+
 
 Lx = 12000000
 Ly = 6000000
-delta_s = 200000
+delta_s = 100000
 omega = 7.2921*10**(-5)
 f_0 = 2 * omega * math.sin(math.pi/4)
 k = (2 * math.pi)/(Lx/2)
@@ -19,11 +23,13 @@ N = int(Ly/delta_s)
 xvalues, yvalues = np.meshgrid(np.arange(0,Lx,delta_s),np.arange(0,Ly,delta_s)) #Crée deux tableaux de 30 pour 60, l'un avec les valeurs de x et l'autre de y
 
 ########## - Définition des fonctions - ###########
+
 """
 Note sur la périodicité:
 	Les modules (%) sont utilisés pour faire la périodicité aux bords. Ainsi pour un psi situé par exemple sur le bord est il prendra en compte pour son calcul
 son voisin fictif situé sur le bord ouest.
 """
+
 def current_flux(zeta, u, v):
 
 	current_flux = np.zeros((N,M))
@@ -73,12 +79,13 @@ def zeta(F,zeta):
 """
 # Définition d'une grande matrice carrée diagonale A de côté N x M avec -4 sur sa diagonale. 
 A = -4*np.eye(N*M)
+
 """
 On veut sur chaque ligne ajouter un terme "1" correspondant à l'emplacement des 4 valeurs adjacentes de psi_i,j. On a donc
 	- Deux 1 à gauche et à droite de la diagonale, respectivement pour psi_i,j+1 et psi_i,j-1
 	- Deux 1 à une distance M de la diagonale pour psi_i+1,j et psi_i-1,j
-
 """
+
 for i in range(N*M):
 	A[i,(i+1)%(N*M)] = 1
 	A[i,i-1] = 1
@@ -123,14 +130,17 @@ zeta_0 = zeta_init(psi_0)
 u_0 = u(psi_0)
 v_0 = v(psi_0)
 """
+subplot(1,3,1)
 pcolormesh(xvalues,yvalues,zeta_0)
 colorbar()
-title('zeta')
-show()
+title('zeta_0')
+
+subplot(1,3,2)
+title('psi_0')
 pcolormesh(xvalues,yvalues,psi_0)
 colorbar()
-title('streamfunction')
-show()
+
+subplot(1,3,3)
 quiver(xvalues,yvalues,u_0,v_0)
 colorbar()
 show()
@@ -138,7 +148,7 @@ show()
 
 ############ - Numerical integration - ############
 
-temps_integration_en_jour = 4
+temps_integration_en_jour = 12
 delta_t_en_heure = 1
 delta_t = 3600 * delta_t_en_heure #passage au SI
 temps_integration = 60 * 60 * 24 * temps_integration_en_jour #passage au SI
@@ -146,7 +156,7 @@ nb_pas_de_temps = int(temps_integration/delta_t)
 
 # à chaque itération du temps le résultat sera ajouté en dernière place de ces vecteurs.
 
-
+nb_plot = 1
 for t in range(nb_pas_de_temps):
 	if t == 0: #On pose les CI
 		u_tot = [u_0]
@@ -172,8 +182,9 @@ for t in range(nb_pas_de_temps):
 
 
 	#On plot les résultats tous les n pas de temps
+"""
 	n = 5
-	if t in np.arange(0,nb_pas_de_temps,n) :
+	if t in np.arange(0,nb_pas_de_temps,n):
 		pcolormesh(xvalues,yvalues,zeta_tot[-1])
 		colorbar()
 		title('zeta')
@@ -185,5 +196,53 @@ for t in range(nb_pas_de_temps):
 		quiver(xvalues,yvalues,u_tot[-1],v_tot[-1])
 		colorbar()
 		show()
+	#Plot de 6 tableau le long de la simulation
+	if t in np.arange(0,60,10):
+		subplot(2,3,nb_plot)
+		title('t= {} heures'.format(t*delta_t_en_heure))
+		pcolormesh(xvalues,yvalues,zeta_tot[-1])
+		colorbar()
+
+		nb_plot += 1
+"""
+"""
+#plot dynamique des vecteurs vitesses au cours du temps
+
+u_anim = u_tot[0]
+v_anim = v_tot[0]
+
+fig, ax = plt.subplots(1,1)
+Q = ax.quiver(xvalues, yvalues, u_anim, v_anim, pivot='mid', color='r')
+
+def update_quiver(num, Q, x, y):
+	if num == nb_pas_de_temps:
+		plt.pause(100)
+	u_anim = u_tot[num]
+	v_anim = v_tot[num]
+	title('t = {} heures'.format(num*delta_t_en_heure))
+
+	Q.set_UVC(u_anim,v_anim)
+
+	return Q,
+
+# you need to set blit=False, or the first set of arrows never gets
+# cleared on subsequent frames
+anim = animation.FuncAnimation(fig, update_quiver, fargs=(Q,xvalues,yvalues),interval=50, blit=False)
+fig.tight_layout()
+plt.show()
+"""
+
+#plot dynamique de psi au cours du temps, pour avoir zeta il faut changer les deux psi_tot en zeta_tot
+fig = plt.figure()
+im = plt.imshow(psi_tot[0], interpolation='nearest', cmap='Blues')
+colorbar()
+def update(data):
+	im.set_array(data)
+def data_gen(n):
+	for n in range(n):
+		title('psi, temps ={}h'.format(n*delta_t_en_heure))
+		yield psi_tot[n+1]
+ani = animation.FuncAnimation(fig, update, data_gen(nb_pas_de_temps), interval=0)
+plt.show()
 
 
