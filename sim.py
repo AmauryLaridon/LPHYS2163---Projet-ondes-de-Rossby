@@ -7,9 +7,9 @@ import matplotlib.animation as animation
 
 phi_0 = ((2*np.pi)/360)*45  # latitude en radian
 Delta_s = 200000  # résolution de la maille spatiale en mètre
-Delta_t = 360  # résolution de la maille temporelle en seconde
-nbr_jour = 1  # nombre de jours de simulation
-T = 86400*nbr_jour  # temps total de simulation en seconde
+Delta_t = 3600    # résolution de la maille temporelle en seconde valeur par défaut d'une heure
+nbr_jours = 1  # nombre de jours de simulation
+T = 86400*nbr_jours  # temps total de simulation en seconde
 L_x = 12000000  # longueur du domaine selon x en mètre
 L_y = 6000000  # longueur du domaine selon y en mètre
 M = int(L_x/Delta_s)  # nombre d'itération selon x
@@ -62,22 +62,9 @@ def vort_init():
         # print("i = ", i)
         for j in range(M):
             # print("j = ", j)
-            if i == 0:
-                # conditions aux bords périodiques : le Nord du domaine = le Sud du domaine
-                vort[0, :] = vort[-1, :]
-            elif j == 0:
-                # conditions aux bords périodiques : l'Ouest du domaine = l'Est du domaine
-                vort[:, 0] = vort[:, -1]
-            elif i == (N-1):
-                # conditions aux bords périodiques : le Sud du domaine = le Nord du domaine
-                vort[N-1, :] = vort[0, :]
-            elif j == (M-1):
-                # conditions aux bords périodiques : l'Est du domaine = l'Ouest du domaine
-                vort[:, M-1] = vort[:, 0]
-            else:
-                vort[i, j] = (1/(Delta_s**2))*(-4*psi_0[i, j]+psi_0[i, j+1] +
-                                               psi_0[i, j-1]+psi_0[i+1, j]+psi_0[i-1, j])
-                # print("vort({},{}) =".format(i, j), vort[i, j])
+            vort[i, j] = (1/(Delta_s**2))*(-4*psi_0[i, j]+psi_0[i, (j+1) % M] +
+                                           psi_0[i, j-1]+psi_0[(i+1) % N, j]+psi_0[i-1, j])
+
     return vort
 
 
@@ -89,17 +76,8 @@ def velocity_field(psi):
         # print("i = ", i)
         for j in range(M):
             # print("j = ", j)
-            if i == (N-1):
-                # conditions aux bords périodiques : le Sud du domaine = le Nord du domaine
-                u[N-1, :] = u[0, :]
-                v[N-1, :] = v[0, :]
-            elif j == (M-1):
-                # conditions aux bords périodiques : l'Est du domaine = l'Ouest du domaine
-                u[:, M-1] = u[:, 0]
-                v[:, M-1] = v[:, 0]
-            else:
-                u[i, j] = (-1/(2*Delta_s))*(psi[i+1, j]-psi[i-1, j])
-                v[i, j] = (1/(2*Delta_s))*(psi[i, j+1]-psi[i, j-1])
+            u[i, j] = (-1/(2*Delta_s))*(psi[(i+1) % N, j]-psi[i-1, j])
+            v[i, j] = (1/(2*Delta_s))*(psi[i, (j+1) % M]-psi[i, j-1])
     return [u, v]
 
 
@@ -112,15 +90,8 @@ def vort_flux(u, v, zeta):
         # print("i = ", i)
         for j in range(M):
             # print("j = ", j)
-            if i == (N-1):
-                # conditions aux bords périodiques : le Sud du domaine = le Nord du domaine
-                F[N-1, :] = F[0, :]
-            elif j == (M-1):
-                # conditions aux bords périodiques : l'Est du domaine = l'Ouest du domaine
-                F[:, M-1] = F[:, 0]
-            else:
-                F[i, j] = (1/(2*Delta_s))*((zeta[i, j+1]*u[i, j+1]-zeta[i, j-1]*u[i, j-1]
-                                            ) + (zeta[i+1, j]*v[i+1, j] - zeta[i-1, j]*v[i-1, j])) + beta_scal(phi_0)*v[i, j]
+            F[i, j] = (1/(2*Delta_s))*(zeta[i, (j+1) % M]*u[i, (j+1) % M]-zeta[i, j-1]*u[i, j-1]
+                                       ) + (zeta[(i+1) % N, j]*v[(i+1) % N, j] - zeta[i-1, j]*v[i-1, j]) + beta_scal(phi_0)*v[i, j]
     return F
 
 
@@ -189,19 +160,20 @@ def vort_dynamic():
     F_dyn = np.zeros((N, M, K))
     for t in range(K-1):
         if t == 0:  # On pose les conditions initiale à t=0
-            stream_func_dyn[:, :, 0] = psi_init()
             U[:, :, 0] = velocity_field(psi_init())[0]
             V[:, :, 0] = velocity_field(psi_init())[1]
+            stream_func_dyn[:, :, 0] = psi_init()
             vort_dyn[:, :, 0] = vort_init()
             F_dyn[:, :, 0] = vort_flux(U[:, :, 0], V[:, :, 0], vort_dyn[:, :, 0])
+            # On résoud avec un schéma d'Euler avant pour t =0
+            vort_dyn[:, :, 1] = -F_dyn[:, :, 0]*Delta_t + vort_dyn[:, :, 0]
 
-        else:  # On résoud dans le temps avec le schéma d'Euler avant.
-            stream_func_dyn[:, :, t] = psi(vort_dyn[:, :, -1])
+        else:  # On résoud dans le temps avec un schéma centré
+            stream_func_dyn[:, :, t] = psi(vort_dyn[:, :, t])
             U[:, :, t] = velocity_field(stream_func_dyn[:, :, t])[0]
             V[:, :, t] = velocity_field(stream_func_dyn[:, :, t])[1]
             F_dyn[:, :, t] = vort_flux(U[:, :, t], V[:, :, t], vort_dyn[:, :, t])
-            vort_dyn[:, :, t+1] = F_dyn[:, :, t]*Delta_t + vort_dyn[:, :, t]
-            # print(vort_dyn)
+            vort_dyn[:, :, t+1] = -F_dyn[:, :, t]*2*Delta_t + vort_dyn[:, :, t]
     return vort_dyn, U, V, stream_func_dyn
 
 
@@ -214,8 +186,9 @@ print("Résolution numérique avec une maille temporelle de {} points".format(K)
 print("-----------------------------------------------------------------------------------------------")
 
 ########## Contourplot de la fonction de courant initiale ############
-"""
+
 X, Y = np.meshgrid(x, y)
+"""
 plt.contourf(X, Y, psi_init(), 100)
 plt.colorbar()
 plt.title("Contour plot de la fonction de courant initiale $\psi_0(x,y)$ \n $L_x = {}km, L_y = {}km, \Delta_s = {}km, W_x = {}km, W_y = {}km$ ".format(
@@ -258,17 +231,17 @@ plt.xlabel("$x$", fontsize=20)
 plt.ylabel("$y$", fontsize=20)
 plt.tight_layout()
 # plt.show()
-
-################################ Plot et animation solution intégrée dans le temps ###################################
 """
+################################ Plot et animation solution intégrée dans le temps ###################################
+
 solution = vort_dynamic()
 vort_dyn = solution[0]
 U = solution[1]
 V = solution[2]
 stream_func_dyn = solution[3]
 
-X, Y = np.meshgrid(x, y)
 
+"""
 ###################### Plot dynamique animé du champ de vitesse ########################
 fig, ax = plt.subplots(1, 1)
 u_anim = U[:, :, 0]
@@ -276,34 +249,28 @@ v_anim = V[:, :, 0]
 Q = ax.quiver(X, Y, u_anim, v_anim, pivot='mid', color='b')
 
 
-def update_quiver(num, Q, x, y):
-    if num == K:
+def update_quiver(t, Q, x, y):
+    if t == K:
         plt.pause(100)
-    print(num)
-    u_anim = U[:, :, num]
-    v_anim = V[:, :, num]
-    nbr_heures = (num*Delta_t)/60
-    plt.title('t = {} heures'.format(num*nbr_heures))
+    print(t)
+    u_anim = U[:, :, t]
+    v_anim = V[:, :, t]
+    nbr_heures = (t*Delta_t)/60
+    nbr_jours = nbr_heures/24
+    plt.title("Temps : t = {:.2f} heures = {:.2f} jours".format(nbr_heures, nbr_jours))
 
     Q.set_UVC(u_anim, v_anim)
     return Q,
 
 
-anim = animation.FuncAnimation(fig, update_quiver, fargs=(Q, X, Y), interval=50, blit=False)
+plt.colorbar(Q)
+anim = animation.FuncAnimation(fig, update_quiver, fargs=(Q, X, Y), interval=800, blit=False)
 fig.tight_layout()
 plt.show()
 
 """
-
 ############ Subplot des intégrations temporelles version non animée et pas quali #########
-solution = vort_dynamic()
-vort_dyn = solution[0]
-U = solution[1]
-V = solution[2]
-stream_func_dyn = solution[3]
-
-X, Y = np.meshgrid(x, y)
-
+print(vort_dyn[:, :, 6])
 
 for t in range(K):
     fig = plt.figure(figsize=[16/1.3, 9/1.3])
@@ -311,10 +278,10 @@ for t in range(K):
     ax_U = plt.subplot2grid((2, 2), (0, 1))
     ax_V = plt.subplot2grid((2, 2), (1, 1))
     ax_vort = plt.subplot2grid((2, 2), (1, 0))
-    print("itérations = ", t)
-    nbr_heures = (t*Delta_t)/60
+    print("itérations = ", t, "/", K)
+    nbr_heures = t
     nbr_jours = nbr_heures/24
-    plt.suptitle("Temps : t = {:.2f} jours".format(nbr_jours))
+    plt.suptitle("Temps : t = {:.2f} heures = {:.2f} jours".format(nbr_heures, nbr_jours))
     ax_stream_func.contourf(X, Y, stream_func_dyn[:, :, t], 100)
     # fig.colorbar(pcm)
     ax_stream_func.set_title("$\psi(x,y,t)$")
@@ -327,9 +294,10 @@ for t in range(K):
     ax_vort.contourf(X, Y, vort_dyn[:, :, t], 100)
     # axs[1, 0].colorbar()
     ax_vort.set_title("$\zeta(x,y,t)$")
-
     plt.show()
 
+
+"""
 ######################## Début test animation cfr vidéo youtube ####################
 fig = plt.figure(figsize=[16/1.3, 9/1.3])
 ax_stream_func = plt.subplot2grid((2, 2), (0, 0))
@@ -337,7 +305,7 @@ ax_U = plt.subplot2grid((2, 2), (0, 1))
 ax_V = plt.subplot2grid((2, 2), (1, 1))
 ax_vort = plt.subplot2grid((2, 2), (1, 0))
 
-#fig, ax_stream_func = plt.subplot()
+# fig, ax_stream_func = plt.subplot()
 
 
 def animate(iter):
