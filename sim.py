@@ -6,8 +6,8 @@ import matplotlib.animation as animation
 ###################################################### Paramètres de la simulation ##################################################
 
 phi_0 = ((2*np.pi)/360)*45  # latitude en radian
-Delta_s = 200000  # résolution de la maille spatiale en mètre
-Delta_t = 3600    # résolution de la maille temporelle en seconde valeur par défaut d'une heure
+Delta_s = 200000  # résolution de la maille spatiale en mètre. Valeur par défaut = 200km
+Delta_t = 3600    # résolution de la maille temporelle en seconde valeur par défaut d'une heure.
 nbr_jours = 1  # nombre de jours de simulation
 T = 86400*nbr_jours  # temps total de simulation en seconde
 L_x = 12000000  # longueur du domaine selon x en mètre
@@ -28,7 +28,7 @@ y = np.arange(0, L_y, Delta_s)  # discrétisation de l'axe vertical
 x_grid = np.matrix(x,)
 y_grid = np.matrix(y,)
 t_grid = np.arange(0, T, Delta_t)  # discrétisation de l'axe temporel
-
+X, Y = np.meshgrid(x, y)
 ###################################################### Fonctions de la simulation ##################################################
 
 
@@ -114,9 +114,7 @@ for i in range(N*M):
     A[i, i-1] = 1
     A[i, (i+M) % (N*M)] = 1
     A[i, i-M] = 1
-# print(A)
 A_inv = np.linalg.inv(A)
-# print(A_inv)
 
 
 def psi(zeta):
@@ -137,7 +135,7 @@ def psi(zeta):
 	notre système est donc donné par A psi_col = delta_s^2 zeta_col et sa solution est trouvée en inversant la matrice A
 	psi_col = A_inv delta_s^2 zeta_col.
 	"""
-    psi_col = (Delta_s)**2 * np.dot(A_inv, zeta_col)
+    psi_col = ((Delta_s)**2) * (np.dot(A_inv, zeta_col))
 
     # Pour finir il faut remettre psi en forme de tableau pour que ce soit cohérent avec le reste de l'implémentation.
     psi = np.zeros((N, M))
@@ -187,7 +185,6 @@ print("-------------------------------------------------------------------------
 
 ########## Contourplot de la fonction de courant initiale ############
 
-X, Y = np.meshgrid(x, y)
 """
 plt.contourf(X, Y, psi_init(), 100)
 plt.colorbar()
@@ -270,7 +267,7 @@ plt.show()
 
 """
 ############ Subplot des intégrations temporelles version non animée et pas quali #########
-print(vort_dyn[:, :, 6])
+print(vort_dyn[:, :, 3])
 
 for t in range(K):
     fig = plt.figure(figsize=[16/1.3, 9/1.3])
