@@ -79,3 +79,36 @@ def psi_init():
     psi_0_T = (g/f_0_scal())*(100*np.sin(k*(x_grid.T))@(np.cos(j*y_grid)))
     psi_0 = psi_0_T.T
     return psi_0
+
+
+def zeta_dynamic():
+    # On crée des tableaux à trois dimensions pour les deux dimensions spatiales et une dimension temporelle.
+    psi_dyn = np.zeros((N, M, K))
+    U = np.zeros((N, M, K))
+    V = np.zeros((N, M, K))
+    zeta_dyn = np.zeros((N, M, K))
+    F_dyn = np.zeros((N, M, K))
+    for t in range(K-1):
+        if t == 0:  # On pose les conditions initiale à t=0
+            U[:, :, 0] = u_0
+            V[:, :, 0] = v_0
+            psi_dyn[:, :, 0] = psi_0
+            zeta_dyn[:, :, 0] = zeta_0
+            F_dyn[:, :, 0] = vort_flux(zeta_0, u_0, v_0)
+            # On résoud avec un schéma d'Euler avant pour t =0
+            zeta_dyn[:, :, 1] = -F_dyn[:, :, 0]*Delta_t + zeta_0
+
+        else:  # On résoud dans le temps avec un schéma centré
+            psi_dyn[:, :, t] = psi(zeta_dyn[:, :, t])
+            U[:, :, t] = u(psi_dyn[:, :, t])
+            V[:, :, t] = v(psi_dyn[:, :, t])
+            F_dyn[:, :, t] = vort_flux(U[:, :, t], V[:, :, t], zeta_dyn[:, :, t])
+            zeta_dyn[:, :, t+1] = -F_dyn[:, :, t]*2*Delta_t + zeta_dyn[:, :, t]
+    return zeta_dyn, U, V, psi_dyn
+
+
+solution = zeta_dynamic()
+zeta_dyn = solution[0]
+U = solution[1]
+V = solution[2]
+psi_dyn = solution[3]

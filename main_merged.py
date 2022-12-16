@@ -10,9 +10,9 @@ import matplotlib.animation as animation
 phi_0 = ((2*np.pi)/360)*45  # latitude en radian
 Lx = 12000000
 Ly = 6000000
-Delta_s = 200000  # résolution de la maille spatiale en mètre. Valeur par défaut = 200km
+Delta_s = 100000  # résolution de la maille spatiale en mètre. Valeur par défaut = 200km
 Delta_t = 3600    # résolution de la maille temporelle en seconde valeur par défaut d'une heure.
-nbr_jours = 1  # nombre de jours de simulation
+nbr_jours = 2  # nombre de jours de simulation
 T = 86400*nbr_jours  # temps total de simulation en seconde
 M = int(Lx/Delta_s)  # nombre d'itération selon x
 N = int(Ly/Delta_s)  # nombre d'itération selon y
@@ -87,7 +87,7 @@ def v(psi):
     return v
 
 
-def vort_flux(zeta, u, v):
+def zeta_flux(zeta, u, v):
     """Donne la valeur du flux de la composante verticale de la vorticité relative F. Prend comme argument le champ de vitesse.
 Prend comme argument la matrice de la composante selon x du champ de vitesse, puis la matrice de la composante y du champs de vitesse
 , la matrice de la composante verticale de la vorticité relative."""
@@ -169,9 +169,9 @@ print("Résolution numérique avec une maille spatiale de {}x{} points".format(
     M, N))
 print("Résolution numérique avec une maille temporelle de {} points".format(K))
 print("-----------------------------------------------------------------------------------------------")
+'''
 ############################################### - Affichage Conditions Initiales ############################################
 ########## Contourplot de la fonction de courant initiale ############
-print(np.shape(psi_0))
 plt.contourf(xvalues, yvalues, psi_0, 100)
 plt.colorbar()
 plt.title("Contour plot de la fonction de courant initiale $\psi_0(x,y)$ \n $L_x = {}km, L_y = {}km, \Delta_s = {}km, W_x = {}km, W_y = {}km$ ".format(
@@ -207,153 +207,107 @@ plt.xlabel("$x$", fontsize=20)
 plt.ylabel("$y$", fontsize=20)
 plt.tight_layout()
 # plt.show()
+'''
 ################################################## - Intégration Numérique - ###############################################
 # On crée un vecteur par variable auquel on va rajouter une composante à chaque pas de temps.
-nb_plot = 1
-for t in range(K):
-    if t == 0:  # On pose les CI
-        u_tot = [u_0]
-        v_tot = [v_0]
-        F_tot = [vort_flux(zeta_0, u_0, v_0)]
-        zeta_tot = [zeta_0]
-        zeta_tot.append(np.zeros((N, M)))
-        for i in range(N):
-            for l in range(M):
-                zeta_tot[-1][i, l] = - F_tot[-1][i, l] * Delta_t + zeta_0[i, l]
-        psi_tot = [psi(zeta_tot[-1])]
-    else:
-        u_tot.append(u(psi_tot[-1]))
-        v_tot.append(v(psi_tot[-1]))
-        F_tot.append(vort_flux(zeta_tot[-1], u_tot[-1], v_tot[-1]))
-        zeta_tot.append(zeta(F_tot[-1], zeta_tot[-2]))
-        psi_tot.append(psi(zeta_tot[-1]))
-        print(np.shape(psi_tot))
-    print("Itérations = ", t, "/", K)
+
+
+def zeta_dynamic():
+    # On crée des tableaux à trois dimensions pour les deux dimensions spatiales et une dimension temporelle.
+    psi_dyn = np.zeros((N, M, K))
+    U = np.zeros((N, M, K))
+    V = np.zeros((N, M, K))
+    zeta_dyn = np.zeros((N, M, K))
+    F_dyn = np.zeros((N, M, K))
+    for t in range(K-1):
+        nbr_heures = t
+        nbr_jours = nbr_heures/24
+        if t == 0:  # On pose les conditions initiale à t=0
+            U[:, :, 0] = u_0
+            V[:, :, 0] = v_0
+            zeta_dyn[:, :, 0] = zeta_0
+            F_dyn[:, :, 0] = zeta_flux(zeta_0, u_0, v_0)
+            zeta_dyn[:, :, 1] = -F_dyn[:, :, 0]*Delta_t + zeta_dyn[:, :, 0]
+            psi_dyn[:, :, 0] = psi_0
+            psi_dyn[:, :, 1] = psi(zeta_dyn[:, :, 1])
+            print("---------------------------------------------------")
+            print("itérations = ", t+1, "/", K)
+            print("Temps : t = {:.2f} heures = {:.2f} jours".format(nbr_heures, nbr_jours))
+        else:  # On résoud dans le temps avec un schéma centré
+            U[:, :, t] = u(psi_dyn[:, :, t])
+            V[:, :, t] = v(psi_dyn[:, :, t])
+            F_dyn[:, :, t] = zeta_flux(zeta_dyn[:, :, t], U[:, :, t], V[:, :, t])
+            zeta_dyn[:, :, t+1] = -2*Delta_t*F_dyn[:, :, t] + zeta_dyn[:, :, t-1]
+            psi_dyn[:, :, t+1] = psi(zeta_dyn[:, :, t+1])
+
+            print("---------------------------------------------------")
+            print("Temps : t = {:.2f} heures = {:.2f} jours".format(nbr_heures, nbr_jours))
+            print("itérations = ", t+1, "/", K)
+    print("---------------------------------------------------")
+    return zeta_dyn, U, V, psi_dyn
+
+
+solution = zeta_dynamic()
+zeta_dyn = solution[0]
+U = solution[1]
+V = solution[2]
+psi_dyn = solution[3]
+
 ################################################ Affichage Intégration Numérique #############################################
 ############ Subplot des intégrations temporelles version non animée et pas quali #########
+"""
 for t in range(K):
     fig = plt.figure(figsize=[16/1.3, 9/1.3])
     ax_stream_func = plt.subplot2grid((2, 2), (0, 0))
-    ax_U = plt.subplot2grid((2, 2), (0, 1))
-    ax_V = plt.subplot2grid((2, 2), (1, 1))
+    ax_u = plt.subplot2grid((2, 2), (0, 1))
+    ax_v = plt.subplot2grid((2, 2), (1, 1))
     ax_vort = plt.subplot2grid((2, 2), (1, 0))
-    print("itérations = ", t, "/", K)
     nbr_heures = t
     nbr_jours = nbr_heures/24
     plt.suptitle("Temps : t = {:.2f} heures = {:.2f} jours".format(nbr_heures, nbr_jours))
-    ax_stream_func.contourf(xvalues, yvalues, psi_tot[-1], 100)
+    ax_stream_func.contourf(xvalues, yvalues, psi_dyn[:, :, t], 100)
     # fig.colorbar(pcm)
     ax_stream_func.set_title("$\psi(x,y,t)$")
-    ax_U.contourf(X, Y, U[:, :, t], 100)
+    ax_u.contourf(xvalues, yvalues, U[:, :, t], 100)
     # fig[0, 1].colorbar()
-    ax_U.set_title("$U(x,y,t)$")
-    ax_V.contourf(X, Y, V[:, :, t], 100)
+    ax_u.set_title("$U(x,y,t)$")
+    ax_v.contourf(xvalues, yvalues, V[:, :, t], 100)
     # axs[1, 1].colorbar()
-    ax_V.set_title("$V(x,y,t)$")
-    ax_vort.contourf(X, Y, vort_dyn[:, :, t], 100)
+    ax_v.set_title("$V(x,y,t)$")
+    ax_vort.contourf(xvalues, yvalues, zeta_dyn[:, :, t], 100)
     # axs[1, 0].colorbar()
     ax_vort.set_title("$\zeta(x,y,t)$")
     plt.show()
 
-
-"""
-######################## Début test animation cfr vidéo youtube ####################
-fig = plt.figure(figsize=[16/1.3, 9/1.3])
-ax_stream_func = plt.subplot2grid((2, 2), (0, 0))
-ax_U = plt.subplot2grid((2, 2), (0, 1))
-ax_V = plt.subplot2grid((2, 2), (1, 1))
-ax_vort = plt.subplot2grid((2, 2), (1, 0))
-
-# fig, ax_stream_func = plt.subplot()
-
-
-def animate(iter):
-    ax_stream_func.clear()
-    ax_stream_func.contourf(X, Y, stream_func_dyn[:, :, iter])
-    return ax_stream_func
-
-
-ani = animation.FuncAnimation(fig, animate, frames=500, blit=True, interval=1000/24, repeat=True)
-
-plt.show()
-
-############# Première version manuelle affichage ################
-for t in range(K):
-    print("itérations = ", t)
-    plt.pause(0.01)
-    nbr_heures = (t*Delta_t)/60
-    plt.suptitle("Temps : t = {:.2f}h".format(nbr_heures))
-    axs[0, 0].contourf(X, Y, stream_func_dyn[:, :, t])
-    # fig.colorbar(pcm)
-    axs[0, 0].set_title("$\psi(x,y,t)$")
-    axs[0, 1].contourf(X, Y, U[:, :, t])
-    # fig[0, 1].colorbar()
-    axs[0, 1].set_title("$U(x,y,t)$")
-    axs[1, 1].contourf(X, Y, V[:, :, t])
-    # axs[1, 1].colorbar()
-    axs[1, 1].set_title("$V(x,y,t)$")
-    axs[1, 0].contourf(X, Y, vort_dyn[:, :, t])
-    # axs[1, 0].colorbar()
-    axs[1, 0].set_title("$\zeta(x,y,t)$")
-
-    for ax in axs.flat:
-        ax.set(xlabel='$x$', ylabel='$y$')
-    for ax in axs.flat:  # Cache label x et y pour les plots sur les côtés.
-        ax.label_outer()
-
-    plt.show()
-"""
-
-
-##############
-
-# On plot les résultats tous les n pas de temps
-"""
-	n = 5
-	if t in np.arange(0,nb_pas_de_temps,n):
-		pcolormesh(xvalues,yvalues,zeta_tot[-1])
-		colorbar()
-		title('zeta')
-		show()
-		pcolormesh(xvalues,yvalues,psi_tot[-1])
-		colorbar()
-		title('streamfunction')
-		show()
-		quiver(xvalues,yvalues,u_tot[-1],v_tot[-1])
-		colorbar()
-		show()
-	# Plot de 6 tableau le long de la simulation
-	if t in np.arange(0,60,10):
-		subplot(2,3,nb_plot)
-		title('t= {} heures'.format(t*delta_t_en_heure))
-		pcolormesh(xvalues,yvalues,zeta_tot[-1])
-		colorbar()
-		nb_plot += 1
-"""
-"""
-# plot dynamique des vecteurs vitesses au cours du temps
-u_anim = u_tot[0]
-v_anim = v_tot[0]
-fig, ax = plt.subplots(1,1)
+############# Plot dynamique des vecteurs vitesses au cours du temps ####################
+u_anim = U[:, :, 0]
+v_anim = V[:, :, 0]
+fig, ax = plt.subplots(1, 1)
 Q = ax.quiver(xvalues, yvalues, u_anim, v_anim, pivot='mid', color='r')
+
+
 def update_quiver(num, Q, x, y):
-	if num == nb_pas_de_temps:
-		plt.pause(100)
-	u_anim = u_tot[num]
-	v_anim = v_tot[num]
-	title('t = {} heures'.format(num*delta_t_en_heure))
-	Q.set_UVC(u_anim,v_anim)
-	return Q,
+    if num == K:
+        plt.pause(100)
+    u_anim = U[:, :, num]
+    v_anim = V[:, :, num]
+    title('t = {} heures'.format(num*(Delta_t/3600)))
+    Q.set_UVC(u_anim, v_anim)
+    return Q,
+
+
 # you need to set blit=False, or the first set of arrows never gets
 # cleared on subsequent frames
-anim = animation.FuncAnimation(fig, update_quiver, fargs=(Q,xvalues,yvalues),interval=50, blit=False)
+anim = animation.FuncAnimation(fig, update_quiver, fargs=(
+    Q, xvalues, yvalues), interval=300, blit=False)
 fig.tight_layout()
 plt.show()
+"""
 
-
-# plot dynamique de psi au cours du temps, pour avoir zeta il faut changer les deux psi_tot en zeta_tot
+"""
+#################### Plot dynamique de zeta_dyn au cours du temps #################
 fig = plt.figure()
-im = plt.imshow(psi_tot[0], interpolation='nearest', cmap='Blues')
+im = plt.imshow(zeta_dyn[:, :, 0], interpolation='nearest', cmap='Blues')
 colorbar()
 
 
@@ -363,10 +317,32 @@ def update(data):
 
 def data_gen(n):
     for n in range(n):
-        title('psi, temps ={}h'.format(n*delta_t_en_heure))
-        yield psi_tot[n+1]
+        title('psi, temps ={}h'.format(n*(Delta_t/3600)))
+        yield zeta_dyn[:, :, n+1]
 
 
-ani = animation.FuncAnimation(fig, update, data_gen(nb_pas_de_temps), interval=0)
+ani = animation.FuncAnimation(fig, update, data_gen(K-1), interval=300)
+plt.title("$\zeta(x,y,t)$ \n $L_x = {}km, L_y = {}km, \Delta_s = {}km, W_x = {}km, W_y = {}km$ ".format(
+    int(Lx/1000), int(Ly/1000), int(Delta_s/1000), int(Wx/1000), int(Wy/1000)), fontsize=11)
 plt.show()
 """
+#################### Plot dynamique de psi_dyn au cours du temps #################
+fig = plt.figure()
+im = plt.imshow(psi_dyn[:, :, 0], interpolation='nearest', cmap='Blues')
+colorbar()
+
+
+def update(data):
+    im.set_array(data)
+
+
+def data_gen(n):
+    for n in range(n):
+        title("$\psi(x,y,t), t ={}h$ \n $L_x = {}km, L_y = {}km, \Delta_s = {}km, W_x = {}km, W_y = {}km$ ".format(n*(Delta_t/3600),
+                                                                                                                   int(Lx/1000), int(Ly/1000), int(Delta_s/1000), int(Wx/1000), int(Wy/1000)), fontsize=11)
+        yield psi_dyn[:, :, n+1]
+
+
+ani = animation.FuncAnimation(fig, update, data_gen(K-1), interval=300)
+
+plt.show()
