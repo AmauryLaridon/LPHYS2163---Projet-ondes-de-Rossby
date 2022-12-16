@@ -5,6 +5,7 @@ from pylab import *
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import matplotlib.animation as animation
+from IPython import display
 
 ###################################################### Paramètres de la simulation ##################################################
 phi_0 = ((2*np.pi)/360)*45  # latitude en radian
@@ -12,7 +13,7 @@ Lx = 12000000
 Ly = 6000000
 Delta_s = 100000  # résolution de la maille spatiale en mètre. Valeur par défaut = 200km
 Delta_t = 3600    # résolution de la maille temporelle en seconde valeur par défaut d'une heure.
-nbr_jours = 2  # nombre de jours de simulation
+nbr_jours = 8  # nombre de jours de simulation
 T = 86400*nbr_jours  # temps total de simulation en seconde
 M = int(Lx/Delta_s)  # nombre d'itération selon x
 N = int(Ly/Delta_s)  # nombre d'itération selon y
@@ -266,16 +267,12 @@ for t in range(K):
     nbr_jours = nbr_heures/24
     plt.suptitle("Temps : t = {:.2f} heures = {:.2f} jours".format(nbr_heures, nbr_jours))
     ax_stream_func.contourf(xvalues, yvalues, psi_dyn[:, :, t], 100)
-    # fig.colorbar(pcm)
     ax_stream_func.set_title("$\psi(x,y,t)$")
     ax_u.contourf(xvalues, yvalues, U[:, :, t], 100)
-    # fig[0, 1].colorbar()
     ax_u.set_title("$U(x,y,t)$")
     ax_v.contourf(xvalues, yvalues, V[:, :, t], 100)
-    # axs[1, 1].colorbar()
     ax_v.set_title("$V(x,y,t)$")
     ax_vort.contourf(xvalues, yvalues, zeta_dyn[:, :, t], 100)
-    # axs[1, 0].colorbar()
     ax_vort.set_title("$\zeta(x,y,t)$")
     plt.show()
 
@@ -304,7 +301,6 @@ fig.tight_layout()
 plt.show()
 """
 
-"""
 #################### Plot dynamique de zeta_dyn au cours du temps #################
 fig = plt.figure()
 im = plt.imshow(zeta_dyn[:, :, 0], interpolation='nearest', cmap='Blues')
@@ -317,13 +313,12 @@ def update(data):
 
 def data_gen(n):
     for n in range(n):
-        title('psi, temps ={}h'.format(n*(Delta_t/3600)))
+        title("$\zeta(x,y,t), t ={}h$ \n $L_x = {}km, L_y = {}km, \Delta_s = {}km, W_x = {}km, W_y = {}km$ \n $T = {} jours, \Delta_t = {}h $ ".format(n*(Delta_t/3600),
+                                                                                                                                                       int(Lx/1000), int(Ly/1000), int(Delta_s/1000), int(Wx/1000), int(Wy/1000), int(nbr_jours), int(Delta_t/3600)), fontsize=16)
         yield zeta_dyn[:, :, n+1]
 
 
-ani = animation.FuncAnimation(fig, update, data_gen(K-1), interval=300)
-plt.title("$\zeta(x,y,t)$ \n $L_x = {}km, L_y = {}km, \Delta_s = {}km, W_x = {}km, W_y = {}km$ ".format(
-    int(Lx/1000), int(Ly/1000), int(Delta_s/1000), int(Wx/1000), int(Wy/1000)), fontsize=11)
+ani = animation.FuncAnimation(fig, update, data_gen(K-1), interval=100)
 plt.show()
 """
 #################### Plot dynamique de psi_dyn au cours du temps #################
@@ -338,11 +333,17 @@ def update(data):
 
 def data_gen(n):
     for n in range(n):
-        title("$\psi(x,y,t), t ={}h$ \n $L_x = {}km, L_y = {}km, \Delta_s = {}km, W_x = {}km, W_y = {}km$ ".format(n*(Delta_t/3600),
-                                                                                                                   int(Lx/1000), int(Ly/1000), int(Delta_s/1000), int(Wx/1000), int(Wy/1000)), fontsize=11)
+        title("$\psi(x,y,t), t ={}h$ \n $L_x = {}km, L_y = {}km, \Delta_s = {}km, W_x = {}km, W_y = {}km$ \n $T = {} jours, \Delta_t = {}h $ ".format(
+            n*(Delta_t/3600), int(Lx/1000), int(Ly/1000), int(Delta_s/1000), int(Wx/1000), int(Wy/1000), int(nbr_jours), int(Delta_t/3600)), fontsize=16)
+        plt.tight_layout()
         yield psi_dyn[:, :, n+1]
 
 
-ani = animation.FuncAnimation(fig, update, data_gen(K-1), interval=300)
-
+ani = animation.FuncAnimation(fig, update, data_gen(K-1), interval=100)
 plt.show()
+
+# Test enregistrement animation
+# DPI = 90
+# writer = animation.FFMpegWriter(fps=30, bitrate=5000)
+#ani.save("test1.mp4", writer = writer, dpi = DPI)
+"""
