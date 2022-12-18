@@ -8,12 +8,12 @@ import matplotlib.animation as animation
 from IPython import display
 
 ###################################################### Paramètres de la simulation ##################################################
-phi_0 = ((2*np.pi)/360)*45  # latitude en radian
-Lx = 12000000
-Ly = 6000000
-Delta_s = 200000  # résolution de la maille spatiale en mètre. Valeur par défaut = 200km
-Delta_t = 3600    # résolution de la maille temporelle en seconde valeur par défaut d'une heure.
-nbr_jours = 1  # nombre de jours de simulation
+phi_0 = np.pi/4  # latitude en radian par défaut la latitude est de 45°.
+Lx = 12000000  # longueur de la maille spatiale. Par défaut 12 000km
+Ly = 6000000  # larger de la maille spatiale. Par défaut 6 000km
+Delta_s = 50000  # résolution de la maille spatiale en mètre. Valeur par défaut = 200km
+Delta_t = 1200    # résolution de la maille temporelle en seconde valeur par défaut d'une heure.
+nbr_jours = 4  # nombre de jours de simulation
 T = 86400*nbr_jours  # temps total de simulation en seconde
 M = int(Lx/Delta_s)  # nombre d'itération selon x
 N = int(Ly/Delta_s)  # nombre d'itération selon y
@@ -38,7 +38,7 @@ son voisin fictif situé sur le bord ouest.
 
 def f_0_scal(phi_0):
     """Donne la valeur du paramètre de Coriolis f_0 en un scalaire à phi_0 fixé"""
-    return 2*Omega*np.sin(phi_0)
+    return (2*Omega*np.sin(phi_0))
 
 
 def beta_scal(phi):
@@ -50,13 +50,11 @@ def psi_init():
     """Donne une condition initiale pour la fonction psi_0"""
     k = (2*np.pi)/Wx
     j = (2*np.pi)/Wy
-    x = np.arange(0, Lx, Delta_s)  # discrétisation de l'axe horizontal
-    y = np.arange(0, Ly, Delta_s)  # discrétisation de l'axe vertical
-    x_grid = np.matrix(x,)
-    y_grid = np.matrix(y,)
-    psi_0_T = np.zeros((N, M))
-    psi_0_T = (g/f_0_scal(phi_0))*(100*np.sin(k*(x_grid.T))@(np.cos(j*y_grid)))
-    psi_0 = psi_0_T.T
+    psi_0 = np.zeros((N, M))
+    for i in range(N):
+        for l in range(M):
+            psi_0[i, l] = (g/f_0_scal(phi_0)) * (100 * math.sin(k *
+                                                                xvalues[i, l]) * math.cos(j * yvalues[i, l]))
     return psi_0
 
 
@@ -149,7 +147,8 @@ en inversant A."""
 	notre système est donc donné par A psi_col = delta_s^2 zeta_col et sa solution est trouvée en inversant la matrice A
 	psi_col = A_inv delta_s^2 zeta_col.
 	"""
-    psi_col = Delta_s**2 * np.dot(A_inv, zeta_col)
+    c = Delta_s**2
+    psi_col = c * np.dot(A_inv, zeta_col)
 
     # Pour finir il faut remettre psi en forme de tableau pour que ce soit cohérent avec le reste de l'implémentation.
     psi = np.zeros((N, M))
@@ -178,6 +177,8 @@ def zeta_dynamic():
             zeta_dyn[:, :, 0] = zeta_0
             F_dyn[:, :, 0] = zeta_flux(zeta_0, u_0, v_0)
             zeta_dyn[:, :, 1] = -F_dyn[:, :, 0]*Delta_t + zeta_dyn[:, :, 0]
+            print(np.shape(psi_0))
+            print(np.shape(psi_dyn[:, :, 0]))
             psi_dyn[:, :, 0] = psi_0
             psi_dyn[:, :, 1] = psi(zeta_dyn[:, :, 1])
             print("---------------------------------------------------")
@@ -276,7 +277,7 @@ def dyn_plot_velocity_field():
     Q = ax.quiver(xvalues, yvalues, u_anim, v_anim, pivot='mid', color='r')
 
     def update_quiver(num, Q, x, y):
-        if num == K:
+        if num == K-1:
             plt.pause(100)
         u_anim = U[:, :, num]
         v_anim = V[:, :, num]
@@ -287,7 +288,7 @@ def dyn_plot_velocity_field():
     # you need to set blit=False, or the first set of arrows never gets
     # cleared on subsequent frames
     anim = animation.FuncAnimation(fig, update_quiver, fargs=(
-        Q, xvalues, yvalues), interval=300, blit=False)
+        Q, xvalues, yvalues), interval=100, blit=False)
     fig.tight_layout()
     plt.show()
 
@@ -359,10 +360,10 @@ if __name__ == "__main__":
     V = solution[2]
     psi_dyn = solution[3]
     ### Affichage Solutions ###
-    contour_plot_psi0()
-    contour_plot_zeta_0()
-    quiver_velocity_field()
-    subplot_sol()
-    dyn_plot_velocity_field()
+    # contour_plot_psi0()
+    # contour_plot_zeta_0()
+    # quiver_velocity_field()
+    # subplot_sol()
+    # dyn_plot_velocity_field()
     dyn_plot_zeta()
     dyn_plot_psi()
