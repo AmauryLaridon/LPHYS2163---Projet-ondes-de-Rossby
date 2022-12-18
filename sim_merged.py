@@ -359,10 +359,10 @@ if __name__ == "__main__":
     V = solution[2]
     psi_dyn = solution[3]
     ### Affichage Solutions ###
-    """contour_plot_psi0()
+    contour_plot_psi0()
     contour_plot_zeta_0()
     quiver_velocity_field()
     subplot_sol()
     dyn_plot_velocity_field()
     dyn_plot_zeta()
-    dyn_plot_psi()"""
+    dyn_plot_psi()
