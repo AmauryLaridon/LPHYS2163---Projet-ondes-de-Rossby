@@ -21,7 +21,7 @@ M = int(Lx/delta_s)  # nombre d'itération selon x
 N = int(Ly/delta_s)  # nombre d'itération selon y
 nb_pas_de_temps = int(temps_integration_en_seconde/delta_t)
 rayon_terre = 6371000  # rayon moyen de la Terre en mètres
-g = 9.81  # norme de l'accélaration gravitationnelle
+g = 9.81  # norme de l'accélération gravitationnelle
 omega = 7.29215*10**(-5)  # vitesse angulaire de la rotation de la Terre
 
 ###################################################### Discrétisation des mailles ##################################################
