@@ -12,8 +12,8 @@ Lx = 12000000  # longueur de la maille spatiale. Par défaut 12 000km
 Ly = 6000000  # larger de la maille spatiale. Par défaut 6 000km
 Wx = 6000000  # longueurs d'onde champ initial selon x en mètre
 Wy = 3000000  # longueurs d'onde champ initial selon y en mètre
-delta_s = 600000  # résolution de la maille spatiale en mètre. Valeur par défaut = 200km
-delta_t_en_heure = 0.5
+delta_s = 200000  # résolution de la maille spatiale en mètre. Valeur par défaut = 200km
+delta_t_en_heure = 1
 delta_t = 3600 * delta_t_en_heure  # passage au SI
 temps_integration_en_jour = 12
 temps_integration_en_seconde = 60 * 60 * 24 * temps_integration_en_jour  # passage au SI
@@ -295,12 +295,12 @@ def dyn_plot_velocity_field():
     # you need to set blit=False, or the first set of arrows never gets
     # cleared on subsequent frames
     ani = animation.FuncAnimation(fig, update_quiver, fargs=(
-        Q, xvalues, yvalues), interval=100, blit=False)
+        Q, xvalues, yvalues), interval=200, blit=False, save_count=572)  # save_count = max 280 pour T = 12 jours
     # fig.tight_layout()
 
     # paramètres objet writers
     Writer = writers['ffmpeg']
-    writer = Writer(fps=5, metadata={'artist': 'Me'}, bitrate=-1)
+    writer = Writer(fps=10, bitrate=-1)
     ani.save('dyn_plot_velocity_field.mp4', writer)
     # plt.show()
 
@@ -324,13 +324,14 @@ def dyn_plot_zeta():
             plt.tight_layout()
             yield zeta_tot[t]
 
-    ani = animation.FuncAnimation(fig, update1, data_gen_zeta(nb_pas_de_temps), interval=100)
+    ani = animation.FuncAnimation(fig, update1, data_gen_zeta(
+        nb_pas_de_temps), interval=200, save_count=572)
 
     # paramètres objet writers
     Writer = writers['ffmpeg']
     writer = Writer(fps=5, metadata={'artist': 'Me'}, bitrate=-1)
     ani.save('dyn_plot_zeta.mp4', writer)
-    plt.show()
+    # plt.show()
 #################### Plot dynamique de psi_dyn au cours du temps #################
 
 
@@ -352,14 +353,15 @@ def dyn_plot_psi():
             plt.tight_layout()
             yield psi_tot[n]
 
-    ani = animation.FuncAnimation(fig, update, data_gen(nb_pas_de_temps), interval=100)
+    ani = animation.FuncAnimation(fig, update, data_gen(
+        nb_pas_de_temps), interval=200, save_count=572)
 
     # paramètres objet writers
     Writer = writers['ffmpeg']
     writer = Writer(fps=5, metadata={'artist': 'Me'}, bitrate=-1)
     name_file = 'dyn_plot_psi_delta_s_{}_delta_t_{}.mp4'.format(delta_s, delta_t)
     ani.save('dyn_plot_psi.mp4', writer)
-    plt.show()
+    # plt.show()
 
 
 if __name__ == "__main__":
@@ -379,5 +381,5 @@ if __name__ == "__main__":
     # contour_plot_zeta_0()
     # quiver_velocity_field()
     dyn_plot_velocity_field()
-    # dyn_plot_zeta()
-    # dyn_plot_psi()
+    dyn_plot_zeta()
+    dyn_plot_psi()
