@@ -15,7 +15,7 @@ Wy = 3000000  # longueurs d'onde champ initial selon y en mètre
 delta_s = 200000  # résolution de la maille spatiale en mètre. Valeur par défaut = 200km
 delta_t_en_heure = 1
 delta_t = 3600 * delta_t_en_heure  # passage au SI
-temps_integration_en_jour = 10
+temps_integration_en_jour = 4
 temps_integration_en_seconde = 60 * 60 * 24 * temps_integration_en_jour  # passage au SI
 M = int(Lx/delta_s)  # nombre d'itération selon x
 N = int(Ly/delta_s)  # nombre d'itération selon y
@@ -269,31 +269,6 @@ def quiver_velocity_field():
     plt.show()
 
 ################################################ Affichage Intégration Numérique #############################################
-############ Subplot des intégrations temporelles version non animée et pas quali #########
-
-
-"""
-def subplot_sol():
-    for t in range(temps_integration_en_seconde):
-        fig = plt.figure(figsize=[16/1.3, 9/1.3])
-        ax_stream_func = plt.subplot2grid((2, 2), (0, 0))
-        ax_u = plt.subplot2grid((2, 2), (0, 1))
-        ax_v = plt.subplot2grid((2, 2), (1, 1))
-        ax_vort = plt.subplot2grid((2, 2), (1, 0))
-        nbr_heures = t
-        nbr_jours = nbr_heures/24
-        plt.suptitle("Temps : t = {:.2f} heures = {:.2f} jours".format(
-            nbr_heures, int(t*delta_t_en_heure/24)))
-        ax_stream_func.contourf(xvalues, yvalues, psi_dyn[:, :, t], 100)
-        ax_stream_func.set_title("$\psi(x,y,t)$")
-        ax_u.contourf(xvalues, yvalues, U[:, :, t], 100)
-        ax_u.set_title("$U(x,y,t)$")
-        ax_v.contourf(xvalues, yvalues, V[:, :, t], 100)
-        ax_v.set_title("$V(x,y,t)$")
-        ax_vort.contourf(xvalues, yvalues, zeta_dyn[:, :, t], 100)
-        ax_vort.set_title("$\zeta(x,y,t)$")
-        plt.show()
-"""
 ############# Plot dynamique des vecteurs vitesses au cours du temps ####################
 
 
@@ -304,15 +279,16 @@ def dyn_plot_velocity_field():
     fig, ax = plt.subplots(1, 1)
     Q = ax.quiver(xvalues, yvalues, u_anim, v_anim, pivot='mid', color='r')
 
-    def update_quiver(num, Q, x, y):
-        if num == nb_pas_de_temps:
+    def update_quiver(t, Q, x, y):
+        if t == (nb_pas_de_temps-1):
             plt.pause(100)
-        u_anim = u_tot[num]
-        v_anim = v_tot[num]
-        title("$(u(x,y,t), v(x,y,t)), t ={:.2f}h, jours = {}$ \n $L_x = {}km, L_y = {}km, \Delta_s = {}km, W_x = {}km, W_y = {}km$".format(
-            num*(delta_t/3600), int(num*delta_t_en_heure/24), int(Lx/1000), int(Ly/1000), int(delta_s/1000), int(Wx/1000), int(Wy/1000), fontsize=16))
+        u_anim = u_tot[t]
+        v_anim = v_tot[t]
+        title("$(u(x,y,t), v(x,y,t)), t ={:.2f}h, jours = {}$ \n $L_x = {}km, L_y = {}km, \Delta_s = {}km, W_x = {}km, W_y = {}km$ \n $T = {}\;  jours, \Delta_t = {}h $ ".format(
+            t*(delta_t/3600), int(t*delta_t_en_heure/24), int(Lx/1000), int(Ly/1000), int(delta_s/1000), int(Wx/1000), int(Wy/1000), int(temps_integration_en_jour), int(delta_t/3600)), fontsize=10)
+        xlabel("$x$")
+        ylabel("$y$")
         Q.set_UVC(u_anim, v_anim)
-
         return Q,
 
     # you need to set blit=False, or the first set of arrows never gets
@@ -321,165 +297,57 @@ def dyn_plot_velocity_field():
         Q, xvalues, yvalues), interval=50, blit=False)
     # fig.tight_layout()
     plt.show()
+
 #################### Plot dynamique de zeta_dyn au cours du temps #################
 
 
 def dyn_plot_zeta():
     fig = plt.figure()
-    im = plt.imshow(zeta_dyn[0], interpolation='nearest', cmap='Blues')
+    im = plt.imshow(zeta_tot[0], interpolation='nearest', cmap='Blues')
     colorbar()
 
     def update1(data):
         im.set_array(data)
 
     def data_gen_zeta(n):
-        for n in range(n):
-            title("$\zeta(x,y,t), t ={:.2f}h, jours = {}$ \n $L_x = {}km, L_y = {}km, \Delta_s = {}km, W_x = {}km, W_y = {}km$ \n $T = {} jours, \Delta_t = {}h $ ".format(
-                n*(delta_t/3600), int(n*delta_t_en_heure/24), int(Lx/1000), int(Ly/1000), int(delta_s/1000), int(Wx/1000), int(Wy/1000), int(temps_integration_en_jour), int(delta_t/3600)), fontsize=16)
-            yield zeta_dyn[n+1]
+        for t in range(n):
+            title("$\zeta(x,y,t), t ={:.2f}h, jours = {}$ \n $L_x = {}km, L_y = {}km, \Delta_s = {}km, W_x = {}km, W_y = {}km$ \n $T = {}\;  jours, \Delta_t = {}h $ ".format(
+                t*(delta_t/3600), int(t*delta_t_en_heure/24), int(Lx/1000), int(Ly/1000), int(delta_s/1000), int(Wx/1000), int(Wy/1000), int(temps_integration_en_jour), int(delta_t/3600)), fontsize=13)
+            xlabel("$x$")
+            ylabel("$y$")
+            yield zeta_tot[t]
 
-    ani = animation.FuncAnimation(fig, update1, data_gen_zeta(
-        temps_integration_en_seconde-1), interval=100)
+    ani = animation.FuncAnimation(fig, update1, data_gen_zeta(nb_pas_de_temps), interval=0)
     plt.show()
 #################### Plot dynamique de psi_dyn au cours du temps #################
 
 
 def dyn_plot_psi():
     fig = plt.figure()
-    im = plt.imshow(psi_dyn[0], interpolation='nearest', cmap='Blues')
+
+    im = plt.imshow(psi_tot[0], interpolation='nearest', cmap='Blues')
     colorbar()
 
-    def update2(data):
+    def update(data):
         im.set_array(data)
 
-    def data_gen_psi(n):
-        for n in range(n):
-            title("$\psi(x,y,t), t ={:.2f}h, jours = {}$ \n $L_x = {}km, L_y = {}km, \Delta_s = {}km, W_x = {}km, W_y = {}km$ \n $T = {} jours, \Delta_t = {}h $ ".format(
-                n*(delta_t/3600), int(n*delta_t_en_heure/24), int(Lx/1000), int(Ly/1000), int(delta_s/1000), int(Wx/1000), int(Wy/1000), int(temps_integration_en_jour), int(delta_t/3600)), fontsize=16)
-            plt.tight_layout()
-            yield psi_dyn[n+1]
+    def data_gen(n):
+        for t in range(n):
+            title("$\psi(x,y,t), t ={:.2f}h, jours = {}$ \n $L_x = {}km, L_y = {}km, \Delta_s = {}km, W_x = {}km, W_y = {}km$ \n $T = {}\;  jours, \Delta_t = {}h $ ".format(
+                t*(delta_t/3600), int(t*delta_t_en_heure/24), int(Lx/1000), int(Ly/1000), int(delta_s/1000), int(Wx/1000), int(Wy/1000), int(temps_integration_en_jour), int(delta_t/3600)), fontsize=13)
+            xlabel("$x$")
+            ylabel("$y$")
+            yield psi_tot[t]
 
-    ani = animation.FuncAnimation(fig, update2, data_gen_psi(
-        temps_integration_en_seconde-1), interval=100)
+    ani = animation.FuncAnimation(fig, update, data_gen(nb_pas_de_temps), interval=0)
+
     plt.show()
-
     # Test enregistrement animation
     # DPI = 90
     # writer = animation.FFMpegWriter(fps=30, bitrate=5000)
     # ani.save("test1.mp4", writer = writer, dpi = DPI)
 
 
-"""
-subplot(1,3,1)
-pcolormesh(xvalues,yvalues,zeta_0)
-colorbar()
-title('zeta_0')
-subplot(1,3,2)
-title('psi_0')# norme de l'accélaration gravitationnelle
-pcolormesh(xvalues,yvalues,psi_0)
-colorbar()
-subplot(1,3,3)
-quiver(xvalues,yvalues,u_0,v_0)
-colorbar()
-show()
-"""
-
-# On plot les résultats tous les n pas de temps
-"""
-	n = 5
-	if t in np.arange(0,nb_pas_de_temps,n):
-		pcolormesh(xvalues,yvalues,zeta_tot[-1])
-		colorbar()
-		title('zeta')
-		show()
-		pcolormesh(xvalues,yvalues,psi_tot[-1])
-		colorbar()
-		title('streamfunction')
-		show()
-		quiver(xvalues,yvalues,u_tot[-1],v_tot[-1])
-		colorbar()
-		show()
-	# Plot de 6 tableau le long de la simulation
-	if t in np.arange(0,60,10):
-		subplot(2,3,nb_plot)
-		title('t= {} heures'.format(t*delta_t_en_heure))
-		pcolormesh(xvalues,yvalues,zeta_tot[-1])
-		colorbar()
-		nb_plot += 1
-
-
-# plot dynamique des vecteurs vitesses au cours du temps
-# norme de l'accélaration gravitationnelle
-
-# plot dynamique de psi au cours du temps
-
-
-fig = plt.figure()
-im = plt.imshow(psi_tot[0], interpolation='nearest', cmap='Blues')
-colorbar()
-
-
-def update(data):
-    im.set_array(data)
-
-
-def data_gen(n):
-    for n in range(n):
-        title('psi, temps ={}h, {}j'.format(n*delta_t_en_heure, int(n*delta_t_en_heure/24)))
-        yield psi_tot[n]
-
-
-ani = animation.FuncAnimation(fig, update, data_gen(nb_pas_de_temps), interval=0)
-
-plt.show()
-
-fig = plt.figure()
-im = plt.imshow(zeta_tot[0], interpolation='nearest', cmap='Blues')
-colorbar()
-
-
-def update(data):
-    im.set_array(data)
-
-
-def data_gen(n):
-    for n in range(n):
-    title('zeta, temps ={}h, {}j'.format(n*delta_t_en_heure, int(n*delta_t_en_heure/24)))
-    yield zeta_tot[n]
-
-
-ani = animation.FuncAnimation(fig, update, data_gen(nb_pas_de_temps), interval=0)
-
-plt.show()
-
-
-u_anim = u_tot[0]
-v_anim = v_tot[0]
-
-fig, ax = plt.subplots(1, 1)
-Q = ax.quiver(xvalues, yvalues, u_anim, v_anim, pivot='mid', color='r')
-
-
-def update_quiver(num, Q, x, y):
-    if num == nb_pas_de_temps:
-        plt.pause(100)
-    u_anim = u_tot[num]
-    v_anim = v_tot[num]
-    title('t = {} heures, {} jours'.format(num*delta_t_en_heure, int(num*delta_t_en_heure/24)))
-
-    Q.set_UVC(u_anim, v_anim)
-
-    return Q,
-
-
-# you need to set blit=False, or the first set of arrows never gets
-# cleared on subsequent frames
-anim = animation.FuncAnimation(fig, update_quiver, fargs=(
-    Q, xvalues, yvalues), interval=50, blit=False)
-fig.tight_layout()
-plt.show()
-
-"""
 if __name__ == "__main__":
     ### Conditions Initiales ###
     psi_0 = psi_init()
@@ -490,13 +358,12 @@ if __name__ == "__main__":
     solution = zeta_dynamic()
     u_tot = solution[0]
     v_tot = solution[1]
-    zeta_dyn = solution[2]
-    psi_dyn = solution[3]
+    zeta_tot = solution[2]
+    psi_tot = solution[3]
     ### Affichage Solutions ###
     # contour_plot_psi0()
     # contour_plot_zeta_0()
     # quiver_velocity_field()
-    # subplot_sol()
     dyn_plot_velocity_field()
     dyn_plot_zeta()
     dyn_plot_psi()
