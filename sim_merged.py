@@ -8,11 +8,12 @@ import matplotlib.animation as animation
 from IPython import display
 
 ###################################################### Paramètres de la simulation ##################################################
-phi_0 = np.pi/4  # latitude en radian par défaut la latitude est de 45°.
+phi_0 = (2*np.pi/360)*45  # latitude en radian par défaut la latitude est de 45°.
 Lx = 12000000  # longueur de la maille spatiale. Par défaut 12 000km
 Ly = 6000000  # larger de la maille spatiale. Par défaut 6 000km
 Delta_s = 200000  # résolution de la maille spatiale en mètre. Valeur par défaut = 200km
 Delta_t = 3600    # résolution de la maille temporelle en seconde valeur par défaut d'une heure.
+Delta_t_heure = Delta_t/3600
 nbr_jours = 5  # nombre de jours de simulation
 T = 86400*nbr_jours  # temps total de simulation en seconde
 M = int(Lx/Delta_s)  # nombre d'itération selon x
@@ -20,7 +21,7 @@ N = int(Ly/Delta_s)  # nombre d'itération selon y
 K = int(T/Delta_t)  # nombre d'itération selon t
 Wx = 6000000  # longueurs d'onde champ initial selon x en mètre
 Wy = 3000000  # longueurs d'onde champ initial selon y en mètre
-Omega = 7.2921*10**(-5)  # vitesse angulaire de la rotation de la Terre
+Omega = 7.2921*10**(-5)  # vitesse angulai# vitesse angulaire de la rotation de la Terre
 g = 9.81  # norme de l'accélaration gravitationnelle
 a = 6371000  # rayon moyen de la Terre en mètres
 
@@ -124,11 +125,55 @@ On veut sur chaque ligne ajouter un terme "1" correspondant à l'emplacement des
 	- Deux 1 à une distance M de la diagonale pour psi_i+1,j et psi_i-1,j
 """
 
+"""
+C_diag = (-4)*np.ones(M*M)
+print(np.shape(C_diag))
+C_diag_min_and_plus = np.ones(N*M)
+C = np.diag(C_diag_min_and_plus, k=-1) + np.diag(C_diag_min_and_plus, k=1) + np.diag(C_diag, k=0)
+print(np.shape(C))
+
+# np.diag(A, k=1) = np.ones((N*M)-1)
+# np.diag(A, k=-1) = np.ones((N*M)-1)
+
+# V1.0 Augustun remplissage matrice A
+
 for i in range(N*M):
     A[i, (i+1) % (N*M)] = 1
     A[i, i-1] = 1
     A[i, (i+M) % (N*M)] = 1
     A[i, i-M] = 1
+# A[0, (M*N)-1] = 0 modification des valeurs 1 aux extrêmes de la matrice
+# A[(N*M)-1, 0] = 0 modification des valeurs 1 aux extrêmes de la matrice
+print(A)
+A_inv = np.linalg.inv(A)
+"""
+
+# V2.0 Augustin remplissage matrice A
+col = 0
+for lin_A in range(N*M):
+    if lin_A in np.arange(M, N*M, M):
+        col += 1
+    lin = lin_A % M
+    col_courant = 0
+    # print('ligne {} / {}'.format(lin_A,N*M))
+    for col_A in range(N*M):
+
+        if col_A in np.arange(M, N*M, M):
+            col_courant += 1
+        lin_courant = col_A % M
+
+        if col_courant == col and lin_courant == (lin+1) % M:
+            A[lin_A, col_A] = 1
+
+        if col_courant == col and lin_courant == (lin-1) % M:
+            A[lin_A, col_A] = 1
+
+        if col_courant == (col+1) % N and lin_courant == lin:
+            A[lin_A, col_A] = 1
+
+        if col_courant == (col-1) % N and lin_courant == lin:
+            A[lin_A, col_A] = 1
+# print('inversion')
 A_inv = np.linalg.inv(A)
 
 
@@ -144,8 +189,8 @@ en inversant A."""
 
     """Ici intervient notre matrice A définie plus haut.
 	En définissant psi_col par rapport au tableau psi de la même manière que l'on a définit zeta_col par rapprot à zeta
-	notre système est donc donné par A psi_col = delta_s^2 zeta_col et sa solution est trouvée en inversant la matrice A
-	psi_col = A_inv delta_s^2 zeta_col.
+	notre systAjout d’un écoulement moyenème est donc donné par A psi_col = delta_s ^ 2 zeta_col et sa solution est trouvée en inversant la matrice A
+	psi_col = A_inv delta_s ^ 2 zeta_col.
 	"""
     c = Delta_s**2
     psi_col = c * np.dot(A_inv, zeta_col)
@@ -256,7 +301,8 @@ def subplot_sol():
         ax_vort = plt.subplot2grid((2, 2), (1, 0))
         nbr_heures = t
         nbr_jours = nbr_heures/24
-        plt.suptitle("Temps : t = {:.2f} heures = {:.2f} jours".format(nbr_heures, nbr_jours))
+        plt.suptitle("Temps : t = {:.2f} heures = {:.2f} jours".format(
+            nbr_heures, int(t*Delta_t_heure/24)))
         ax_stream_func.contourf(xvalues, yvalues, psi_dyn[:, :, t], 100)
         ax_stream_func.set_title("$\psi(x,y,t)$")
         ax_u.contourf(xvalues, yvalues, U[:, :, t], 100)
@@ -281,7 +327,8 @@ def dyn_plot_velocity_field():
             plt.pause(100)
         u_anim = U[:, :, num]
         v_anim = V[:, :, num]
-        title('t = {} heures'.format(num*(Delta_t/3600)))
+        title("$\(u(x,y,t),v(x,y,t)), t ={:.2f}h, jours = {}$ \n $L_x = {}km, L_y = {}km, \Delta_s = {}km, W_x = {}km, W_y = {}km$ \n $T = {} jours, \Delta_t = {}h $ ".format(
+            n*(Delta_t/3600), int(n*Delta_t_heure/24), int(Lx/1000), int(Ly/1000), int(Delta_s/1000), int(Wx/1000), int(Wy/1000), int(nbr_jours), int(Delta_t/3600)), fontsize=16)
         Q.set_UVC(u_anim, v_anim)
         return Q,
 
@@ -306,8 +353,8 @@ def dyn_plot_zeta():
 
     def data_gen_zeta(n):
         for n in range(n):
-            title("$\zeta(x,y,t), t ={}h$ \n $L_x = {}km, L_y = {}km, \Delta_s = {}km, W_x = {}km, W_y = {}km$ \n $T = {} jours, \Delta_t = {}h $ ".format(n*(Delta_t/3600),
-                                                                                                                                                           int(Lx/1000), int(Ly/1000), int(Delta_s/1000), int(Wx/1000), int(Wy/1000), int(nbr_jours), int(Delta_t/3600)), fontsize=16)
+            title("$\zeta(x,y,t), t ={:.2f}h, jours = {}$ \n $L_x = {}km, L_y = {}km, \Delta_s = {}km, W_x = {}km, W_y = {}km$ \n $T = {} jours, \Delta_t = {}h $ ".format(
+                n*(Delta_t/3600), int(n*Delta_t_heure/24), int(Lx/1000), int(Ly/1000), int(Delta_s/1000), int(Wx/1000), int(Wy/1000), int(nbr_jours), int(Delta_t/3600)), fontsize=16)
             yield zeta_dyn[:, :, n+1]
 
     ani = animation.FuncAnimation(fig, update1, data_gen_zeta(K-1), interval=100)
@@ -326,8 +373,8 @@ def dyn_plot_psi():
 
     def data_gen_psi(n):
         for n in range(n):
-            title("$\psi(x,y,t), t ={}h$ \n $L_x = {}km, L_y = {}km, \Delta_s = {}km, W_x = {}km, W_y = {}km$ \n $T = {} jours, \Delta_t = {}h $ ".format(
-                n*(Delta_t/3600), int(Lx/1000), int(Ly/1000), int(Delta_s/1000), int(Wx/1000), int(Wy/1000), int(nbr_jours), int(Delta_t/3600)), fontsize=16)
+            title("$\psi(x,y,t), t ={:.2f}h, jours = {}$ \n $L_x = {}km, L_y = {}km, \Delta_s = {}km, W_x = {}km, W_y = {}km$ \n $T = {} jours, \Delta_t = {}h $ ".format(
+                n*(Delta_t/3600), int(n*Delta_t_heure/24), int(Lx/1000), int(Ly/1000), int(Delta_s/1000), int(Wx/1000), int(Wy/1000), int(nbr_jours), int(Delta_t/3600)), fontsize=16)
             plt.tight_layout()
             yield psi_dyn[:, :, n+1]
 
@@ -337,7 +384,7 @@ def dyn_plot_psi():
     # Test enregistrement animation
     # DPI = 90
     # writer = animation.FFMpegWriter(fps=30, bitrate=5000)
-    #ani.save("test1.mp4", writer = writer, dpi = DPI)
+    # ani.save("test1.mp4", writer = writer, dpi = DPI)
 
 
 if __name__ == "__main__":
@@ -348,6 +395,7 @@ if __name__ == "__main__":
         M, N))
     print("Résolution numérique avec une maille temporelle de {} points".format(K))
     print("-----------------------------------------------------------------------------------------------")
+
     ### Conditions Initiales ###
     psi_0 = psi_init()
     zeta_0 = zeta_init(psi_0)
@@ -360,10 +408,10 @@ if __name__ == "__main__":
     V = solution[2]
     psi_dyn = solution[3]
     ### Affichage Solutions ###
-    # contour_plot_psi0()
-    # contour_plot_zeta_0()
-    # quiver_velocity_field()
+    contour_plot_psi0()
+    contour_plot_zeta_0()
+    quiver_velocity_field()
     # subplot_sol()
     # dyn_plot_velocity_field()
-    dyn_plot_zeta()
-    dyn_plot_psi()
+    # dyn_plot_zeta()
+    # dyn_plot_psi()
