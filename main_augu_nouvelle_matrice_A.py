@@ -3,7 +3,7 @@ import random as rand
 import math
 from pylab import *
 import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
+from matplotlib.animation import FuncAnimation, writers
 import matplotlib.animation as animation
 
 ###################################################### Paramètres de la simulation ##################################################
@@ -12,10 +12,10 @@ Lx = 12000000  # longueur de la maille spatiale. Par défaut 12 000km
 Ly = 6000000  # larger de la maille spatiale. Par défaut 6 000km
 Wx = 6000000  # longueurs d'onde champ initial selon x en mètre
 Wy = 3000000  # longueurs d'onde champ initial selon y en mètre
-delta_s = 200000  # résolution de la maille spatiale en mètre. Valeur par défaut = 200km
-delta_t_en_heure = 1
+delta_s = 600000  # résolution de la maille spatiale en mètre. Valeur par défaut = 200km
+delta_t_en_heure = 0.5
 delta_t = 3600 * delta_t_en_heure  # passage au SI
-temps_integration_en_jour = 4
+temps_integration_en_jour = 12
 temps_integration_en_seconde = 60 * 60 * 24 * temps_integration_en_jour  # passage au SI
 M = int(Lx/delta_s)  # nombre d'itération selon x
 N = int(Ly/delta_s)  # nombre d'itération selon y
@@ -285,18 +285,24 @@ def dyn_plot_velocity_field():
         u_anim = u_tot[t]
         v_anim = v_tot[t]
         title("$(u(x,y,t), v(x,y,t)), t ={:.2f}h, jours = {}$ \n $L_x = {}km, L_y = {}km, \Delta_s = {}km, W_x = {}km, W_y = {}km$ \n $T = {}\;  jours, \Delta_t = {}h $ ".format(
-            t*(delta_t/3600), int(t*delta_t_en_heure/24), int(Lx/1000), int(Ly/1000), int(delta_s/1000), int(Wx/1000), int(Wy/1000), int(temps_integration_en_jour), int(delta_t/3600)), fontsize=10)
+            t*(delta_t/3600), int(t*delta_t_en_heure/24), int(Lx/1000), int(Ly/1000), int(delta_s/1000), int(Wx/1000), int(Wy/1000), int(temps_integration_en_jour), int(delta_t/3600)), fontsize=8)
         xlabel("$x$")
         ylabel("$y$")
+        plt.tight_layout()
         Q.set_UVC(u_anim, v_anim)
         return Q,
 
     # you need to set blit=False, or the first set of arrows never gets
     # cleared on subsequent frames
-    anim = animation.FuncAnimation(fig, update_quiver, fargs=(
-        Q, xvalues, yvalues), interval=50, blit=False)
+    ani = animation.FuncAnimation(fig, update_quiver, fargs=(
+        Q, xvalues, yvalues), interval=100, blit=False)
     # fig.tight_layout()
-    plt.show()
+
+    # paramètres objet writers
+    Writer = writers['ffmpeg']
+    writer = Writer(fps=5, metadata={'artist': 'Me'}, bitrate=-1)
+    ani.save('dyn_plot_velocity_field.mp4', writer)
+    # plt.show()
 
 #################### Plot dynamique de zeta_dyn au cours du temps #################
 
@@ -312,12 +318,18 @@ def dyn_plot_zeta():
     def data_gen_zeta(n):
         for t in range(n):
             title("$\zeta(x,y,t), t ={:.2f}h, jours = {}$ \n $L_x = {}km, L_y = {}km, \Delta_s = {}km, W_x = {}km, W_y = {}km$ \n $T = {}\;  jours, \Delta_t = {}h $ ".format(
-                t*(delta_t/3600), int(t*delta_t_en_heure/24), int(Lx/1000), int(Ly/1000), int(delta_s/1000), int(Wx/1000), int(Wy/1000), int(temps_integration_en_jour), int(delta_t/3600)), fontsize=13)
+                t*(delta_t/3600), int(t*delta_t_en_heure/24), int(Lx/1000), int(Ly/1000), int(delta_s/1000), int(Wx/1000), int(Wy/1000), int(temps_integration_en_jour), int(delta_t/3600)), fontsize=8)
             xlabel("$x$")
             ylabel("$y$")
+            plt.tight_layout()
             yield zeta_tot[t]
 
-    ani = animation.FuncAnimation(fig, update1, data_gen_zeta(nb_pas_de_temps), interval=0)
+    ani = animation.FuncAnimation(fig, update1, data_gen_zeta(nb_pas_de_temps), interval=100)
+
+    # paramètres objet writers
+    Writer = writers['ffmpeg']
+    writer = Writer(fps=5, metadata={'artist': 'Me'}, bitrate=-1)
+    ani.save('dyn_plot_zeta.mp4', writer)
     plt.show()
 #################### Plot dynamique de psi_dyn au cours du temps #################
 
@@ -332,20 +344,22 @@ def dyn_plot_psi():
         im.set_array(data)
 
     def data_gen(n):
-        for t in range(n):
+        for n in range(n):
             title("$\psi(x,y,t), t ={:.2f}h, jours = {}$ \n $L_x = {}km, L_y = {}km, \Delta_s = {}km, W_x = {}km, W_y = {}km$ \n $T = {}\;  jours, \Delta_t = {}h $ ".format(
-                t*(delta_t/3600), int(t*delta_t_en_heure/24), int(Lx/1000), int(Ly/1000), int(delta_s/1000), int(Wx/1000), int(Wy/1000), int(temps_integration_en_jour), int(delta_t/3600)), fontsize=13)
+                n*(delta_t/3600), int(n*delta_t_en_heure/24), int(Lx/1000), int(Ly/1000), int(delta_s/1000), int(Wx/1000), int(Wy/1000), int(temps_integration_en_jour), int(delta_t/3600)), fontsize=10)
             xlabel("$x$")
             ylabel("$y$")
-            yield psi_tot[t]
+            plt.tight_layout()
+            yield psi_tot[n]
 
-    ani = animation.FuncAnimation(fig, update, data_gen(nb_pas_de_temps), interval=0)
+    ani = animation.FuncAnimation(fig, update, data_gen(nb_pas_de_temps), interval=100)
 
+    # paramètres objet writers
+    Writer = writers['ffmpeg']
+    writer = Writer(fps=5, metadata={'artist': 'Me'}, bitrate=-1)
+    name_file = 'dyn_plot_psi_delta_s_{}_delta_t_{}.mp4'.format(delta_s, delta_t)
+    ani.save('dyn_plot_psi.mp4', writer)
     plt.show()
-    # Test enregistrement animation
-    # DPI = 90
-    # writer = animation.FFMpegWriter(fps=30, bitrate=5000)
-    # ani.save("test1.mp4", writer = writer, dpi = DPI)
 
 
 if __name__ == "__main__":
@@ -365,5 +379,5 @@ if __name__ == "__main__":
     # contour_plot_zeta_0()
     # quiver_velocity_field()
     dyn_plot_velocity_field()
-    dyn_plot_zeta()
-    dyn_plot_psi()
+    # dyn_plot_zeta()
+    # dyn_plot_psi()
