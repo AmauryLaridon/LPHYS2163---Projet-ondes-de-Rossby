@@ -9,7 +9,7 @@ import matplotlib.animation as animation
 
 Lx = 12000000
 Ly = 6000000
-delta_s = 200000
+delta_s = 100000
 omega = 7.29215*10**(-5)
 f_0 = 2 * omega * math.sin(math.pi/4)
 k = (2 * math.pi)/(Lx/2)
