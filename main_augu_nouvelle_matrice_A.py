@@ -29,8 +29,9 @@ g = 9.81  # norme de l'accélération gravitationnelle
 omega = 7.29215*10**(-5)  # vitesse angulaire de la rotation de la Terre
 save_count_value_T_12 = 286*(1/delta_t_en_heure)  # variable définis temps sauvegarde animation.
 enregistrement_pas_affich = True  # variable définis si on enregistre si on affiche les résultats.
-mean_flow_u = 0 * np.ones((N, M))  # Champ moyen de fond dans la composante u
-mean_flow_v = 0 * np.ones((N, M))  # Champ moyen de fond dans la composante v
+mean_flow_u = 0 * np.ones((N, M))  # champ moyen de fond dans la composante u
+mean_flow_v = 0 * np.ones((N, M))  # champ moyen de fond dans la composante v
+beta_plane_approx = True  # encode si on est dans l'approximation du plan-beta ou non
 
 ###################################################### Discrétisation des mailles ##################################################
 # Crée deux tableaux de taille NxM, l'un avec les valeurs discrétisée de x et l'autre de y
@@ -50,7 +51,11 @@ def f_0_scal(phi_0):
 
 def beta_scal(phi):
     """Donne la valeur du paramètre beta pour une valeur de latitude phi donnée"""
-    return (2*omega*np.cos(phi)/rayon_terre)
+    if beta_plane_approx:
+        beta = (2*omega*np.cos(phi)/rayon_terre)
+    else:
+        beta = 0
+    return beta
 
 
 def psi_init():
