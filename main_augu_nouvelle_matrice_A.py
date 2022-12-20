@@ -150,7 +150,7 @@ def traceur( u, v, dt):
 		for l in range(M):
 			if matrice_traceur[i,l] == 1:
 				x_trace[m,0] = l
-				y_trace[m,0] = i
+				y_trace[m,0] = N - (i + 1)
 				m += 1
 
 	new_x_trace = np.zeros((nb_traceurs,1))
@@ -165,7 +165,7 @@ def traceur( u, v, dt):
 		matrice_traceur = np.zeros((N,M))
 
 		for m in range(nb_traceurs):
-			matrice_traceur[int(y_trace[m,0]), int(x_trace[m,0])] = 1
+			matrice_traceur[N - (int(y_trace[m,0])+1), int(x_trace[m,0])] = 1
 
 		matrice_tot.append(matrice_traceur)
 
