@@ -122,11 +122,15 @@ def zeta(F, zeta):
     return new_zeta
 
 def traceur( u, v, dt):
-	#lache des traceurs dans l'atmosphère et regarde leurs parcours en fonction du vent à un temps donné
+	"""
+		Lache des traceurs dans l'atmosphère et regarde leurs parcours en fonction du vent à un temps donné. u et v sont les matrices des vents
+		au temps qui nous intéresse, dt est le pas de temps pour animer les traceurs il doit être de l'ordre de grandeurs des vitesses u et v.
+	"""
 	matrice_traceur = np.zeros((N,M))
 	nb_traceurs = 0
+	
 	"""
-	On trace la forme qui va être déformée, ici c'est une grille.
+		On trace ici la forme qui va être déformée, ici c'est une grille.
 	"""
 	for i in range(N):
 		for l in range(M):
@@ -137,7 +141,7 @@ def traceur( u, v, dt):
 				matrice_traceur[i,l] = 1
 				nb_traceurs += 1 
 
-	matrice_tot = []
+	matrice_tot = [matrice_traceur]
 
 	x_trace = np.zeros((nb_traceurs,1))
 	y_trace = np.zeros((nb_traceurs,1))
@@ -174,15 +178,15 @@ def traceur( u, v, dt):
 			im.set_array(data)
 	def data_gen(n):
 		for n in range(n):
-			plt.title('{}/1000'.format(n))
+			plt.title('{}h'.format(round(n*dt/3600,1)))
 			yield matrice_tot[n]
 	ani = animation.FuncAnimation(fig, update, data_gen(1000), interval=0)
 
 	plt.show()
-	
 	for i in range(6):
 		plt.subplot(2,3,i+1)
 		plt.imshow(matrice_tot[100*i])
+		plt.title('t = {}h'.format(round(100*i*dt/3600,1)))
 	plt.show()
 
 
