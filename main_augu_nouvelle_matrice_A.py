@@ -1,3 +1,6 @@
+import numpy
+from mpl_toolkits.axes_grid1 import host_subplot
+from matplotlib.pylab import *
 import numpy as np
 import random as rand
 import math
@@ -10,12 +13,12 @@ import matplotlib.animation as animation
 phi_0 = (2*np.pi/360)*45  # latitude en radian par défaut la latitude est de 45°
 Lx = 12000000  # longueur de la maille spatiale. Par défaut 12 000km
 Ly = 6000000  # larger de la maille spatiale. Par défaut 6 000km
-Wx = 6000000  # longueurs d'onde champ initial selon x en mètre
-Wy = 3000000  # longueurs d'onde champ initial selon y en mètre
-delta_s = 200000  # résolution de la maille spatiale en mètre. Valeur par défaut = 200km
+Wx = 6000000  # longueurs d'onde champ initial selon x en mètre. Par défaut 6 000km
+Wy = 6000000  # longueurs d'onde champ initial selon y en mètre. Par défaut 3 000km
+delta_s = 500000  # résolution de la maille spatiale en mètre. Valeur par défaut = 200km
 delta_t_en_heure = 1
 delta_t = 3600 * delta_t_en_heure  # passage au SI
-temps_integration_en_jour = 12
+temps_integration_en_jour = 4
 temps_integration_en_seconde = 60 * 60 * 24 * temps_integration_en_jour  # passage au SI
 M = int(Lx/delta_s)  # nombre d'itération selon x
 N = int(Ly/delta_s)  # nombre d'itération selon y
@@ -268,8 +271,10 @@ def quiver_velocity_field():
     plt.tight_layout()
     plt.show()
 
+
 ################################################ Affichage Intégration Numérique #############################################
 ############# Plot dynamique des vecteurs vitesses au cours du temps ####################
+save_count_value_T_12 = 286*(1/delta_t_en_heure)  # variable définis temps sauvegarde animation.
 
 
 def dyn_plot_velocity_field():
@@ -295,7 +300,7 @@ def dyn_plot_velocity_field():
     # you need to set blit=False, or the first set of arrows never gets
     # cleared on subsequent frames
     ani = animation.FuncAnimation(fig, update_quiver, fargs=(
-        Q, xvalues, yvalues), interval=200, blit=False, save_count=572)  # save_count = max 280 pour T = 12 jours
+        Q, xvalues, yvalues), interval=200, blit=False, save_count=save_count_value_T_12)  # save_count = max 286 pour T = 12 jours avec delta_t = 1h, save_count = max 572 pour T = 12 jours et delta_t = 0.5h
     # fig.tight_layout()
 
     # paramètres objet writers
@@ -325,7 +330,7 @@ def dyn_plot_zeta():
             yield zeta_tot[t]
 
     ani = animation.FuncAnimation(fig, update1, data_gen_zeta(
-        nb_pas_de_temps), interval=200, save_count=572)
+        nb_pas_de_temps), interval=200, save_count=save_count_value_T_12)
 
     # paramètres objet writers
     Writer = writers['ffmpeg']
@@ -354,7 +359,7 @@ def dyn_plot_psi():
             yield psi_tot[n]
 
     ani = animation.FuncAnimation(fig, update, data_gen(
-        nb_pas_de_temps), interval=200, save_count=572)
+        nb_pas_de_temps), interval=200, save_count=save_count_value_T_12)
 
     # paramètres objet writers
     Writer = writers['ffmpeg']
@@ -364,6 +369,106 @@ def dyn_plot_psi():
     # plt.show()
 
 
+def dyn_subplot():
+    ### V1.0 non opérationnelle subplot_dyn() ###
+    fig, axs = plt.subplots(
+        nrows=2, ncols=2, sharex='col', sharey='row')
+
+    # fig = plt.figure()
+
+    im1 = axs[0, 0].imshow(psi_tot[0], cmap='Blues', animated=True)
+
+    im2 = axs[0, 1].imshow(u_tot[0], cmap='Blues', animated=True)
+
+    im3 = axs[1, 0].imshow(zeta_tot[0], cmap='Blues', animated=True)
+
+    im4 = axs[1, 1].imshow(v_tot[0], cmap='Blues', animated=True)
+
+    def update(data):
+        im1.set_array(data)
+        im2.set_array(data)
+        im3.set_array(data)
+        im4.set_array(data)
+
+    def data_gen(n):
+        for n in range(n):
+            # title("$\psi(x,y,t), t ={:.2f}h, jours = {}$ \n $L_x = {}km, L_y = {}km, \Delta_s = {}km, W_x = {}km, W_y = {}km$ \n $T = {}\;  jours, \Delta_t = {}h $ ".format(
+            # n*(delta_t/3600), int(n*delta_t_en_heure/24), int(Lx/1000), int(Ly/1000), int(delta_s/1000), int(Wx/1000), int(Wy/1000), int(temps_integration_en_jour), int(delta_t/3600)), fontsize=10)
+            # xlabel("$x$")
+            # ylabel("$y$")
+            # plt.tight_layout()
+            yield psi_tot[n]
+            yield u_tot[n]
+            yield zeta_tot[n]
+            yield v_tot[n]
+
+    ani = animation.FuncAnimation(fig, update, data_gen(
+        nb_pas_de_temps), interval=200, save_count=save_count_value_T_12)
+    plt.show()
+### V2.0 non opérationnelle subplot_dyn() ###
+
+
+"""
+    # Sent for figure
+    font = {'size': 9}
+    matplotlib.rc('font', **font)
+
+    # Setup figure and subplots
+    f0 = figure(num=0, figsize=(12, 8))  # , dpi = 100)
+    f0.suptitle("Intégration numérique", fontsize=12)
+    ax01 = subplot2grid((2, 2), (0, 0))
+    ax02 = subplot2grid((2, 2), (0, 1))
+    ax03 = subplot2grid((2, 2), (1, 0))
+    ax04 = subplot2grid((2, 2), (1, 1))
+    # tight_layout()
+
+    # Set titles of subplots
+    ax01.set_title('$\psi(x,y,t)$')
+    ax02.set_title('$u(x,y,t)$')
+    ax03.set_title('$\zeta(x,y,t)$')
+    ax04.set_title('$v(x,y,t)$')
+
+    # set label names
+    ax01.set_xlabel("x")
+    ax01.set_ylabel("y")
+    ax02.set_xlabel("x")
+    ax02.set_ylabel("y")
+    ax03.set_xlabel("x")
+    ax03.set_ylabel("y")
+    ax04.set_xlabel("x")
+    ax04.set_ylabel("y")
+
+    # Data Placeholders
+    t = zeros(0)
+    # set plots
+    im1 = ax01.imshow(psi_tot[0], cmap='Blues', animated=True)
+
+    im2 = ax02.imshow(u_tot[0], cmap='Blues', animated=True)
+
+    im3 = ax03.imshow(zeta_tot[0], cmap='Blues', animated=True)
+
+    im4 = ax04.imshow(v_tot[0], cmap='Blues', animated=True)
+
+    def updateData(t):
+
+        im1.set_array(t)
+        im2.set_array(t)
+        im3.set_array(t)
+        im4.set_array(t)
+
+        return im1, im2, im3, im4
+
+    # interval: draw new frame every 'interval' ms
+    # frames: number of frames to draw
+    simulation = animation.FuncAnimation(
+        f0, updateData(nb_pas_de_temps), blit=False, frames=200, interval=20, repeat=False)
+
+    # Uncomment the next line if you want to save the animation
+    # simulation.save(filename='sim.mp4',fps=30,dpi=300)
+
+    plt.show()
+
+"""
 if __name__ == "__main__":
     ### Conditions Initiales ###
     psi_0 = psi_init()
@@ -380,6 +485,7 @@ if __name__ == "__main__":
     # contour_plot_psi0()
     # contour_plot_zeta_0()
     # quiver_velocity_field()
-    dyn_plot_velocity_field()
-    dyn_plot_zeta()
-    dyn_plot_psi()
+    # dyn_plot_velocity_field()
+    # dyn_plot_zeta()
+    # dyn_plot_psi()
+    dyn_subplot()
