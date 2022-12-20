@@ -8,14 +8,15 @@ from pylab import *
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, writers
 import matplotlib.animation as animation
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 ###################################################### Paramètres de la simulation ##################################################
 phi_0 = (2*np.pi/360)*45  # latitude en radian par défaut la latitude est de 45°
 Lx = 12000000  # longueur de la maille spatiale. Par défaut 12 000km
 Ly = 6000000  # larger de la maille spatiale. Par défaut 6 000km
 Wx = 6000000  # longueurs d'onde champ initial selon x en mètre. Par défaut 6 000km
-Wy = 6000000  # longueurs d'onde champ initial selon y en mètre. Par défaut 3 000km
-delta_s = 500000  # résolution de la maille spatiale en mètre. Valeur par défaut = 200km
+Wy = 3000000  # longueurs d'onde champ initial selon y en mètre. Par défaut 3 000km
+delta_s = 200000  # résolution de la maille spatiale en mètre. Valeur par défaut = 200km
 delta_t_en_heure = 1
 delta_t = 3600 * delta_t_en_heure  # passage au SI
 temps_integration_en_jour = 4
@@ -52,11 +53,13 @@ def psi_init():
     """Donne une condition initiale pour la fonction psi_0"""
     k = (2*np.pi)/Wx
     j = (2*np.pi)/Wy
-    psi_0 = np.zeros((N, M))
-    for i in range(N):
-        for l in range(M):
-            psi_0[i, l] = (g/f_0_scal(phi_0)) * (100 * math.sin(k *
-                                                                xvalues[i, l]) * math.cos(j * yvalues[i, l]))
+    x = np.arange(0, Lx, delta_s)  # discrétisation de l'axe horizontal
+    y = np.arange(0, Ly, delta_s)  # discrétisation de l'axe vertical
+    x_grid = np.matrix(x,)
+    y_grid = np.matrix(y,)
+    psi_0_T = np.zeros((N, M))
+    psi_0_T = (g/f_0_scal(phi_0))*(100*np.sin(k*(x_grid.T))@(np.cos(j*y_grid)))
+    psi_0 = psi_0_T.T
     return psi_0
 
 
@@ -269,6 +272,53 @@ def quiver_velocity_field():
     plt.xlabel("$x$", fontsize=20)
     plt.ylabel("$y$", fontsize=20)
     plt.tight_layout()
+    plt.show()
+
+######################## Subplot champs initiaux ######################
+
+
+def init_subplot():
+
+    fig = plt.figure(figsize=[16/1.3, 9/1.3])
+    plt.gcf().subplots_adjust(left=0.05, bottom=0.08, right=0.93, top=0.9, wspace=0.22, hspace=0.28)
+    ax_stream_func = plt.subplot2grid((2, 2), (0, 0))
+    ax_U = plt.subplot2grid((2, 2), (0, 1))
+    ax_V = plt.subplot2grid((2, 2), (1, 1))
+    ax_vort = plt.subplot2grid((2, 2), (1, 0))
+    plt.suptitle("Temps : t = {:.2f} heures = {:.2f} jours".format(0, 0))
+
+    im01 = ax_stream_func.contourf(xvalues, yvalues, psi_tot[0], 1000)
+    ax_stream_func.set_title("$\psi(x,y,t)$")
+
+    divider = make_axes_locatable(ax_stream_func)
+    cax = divider.append_axes('right', size='5%', pad=0.03)
+    fig.colorbar(im01, cax=cax, orientation='vertical')
+
+    im02 = ax_U.contourf(xvalues, yvalues, u_tot[0], 1000)
+    ax_U.set_title("$u(x,y,t)$")
+
+    divider = make_axes_locatable(ax_U)
+    cax = divider.append_axes('right', size='5%', pad=0.03)
+    fig.colorbar(im02, cax=cax, orientation='vertical')
+
+    im03 = ax_V.contourf(xvalues, yvalues, v_tot[0], 1000)
+    ax_V.set_title("$v(x,y,t)$")
+    ax_V.set_xlabel("$x$")
+    ax_V.set_ylabel("$y$")
+
+    divider = make_axes_locatable(ax_V)
+    cax = divider.append_axes('right', size='5%', pad=0.03)
+    fig.colorbar(im03, cax=cax, orientation='vertical')
+
+    im04 = ax_vort.contourf(xvalues, yvalues, zeta_tot[0], 1000)
+    ax_vort.set_title("$\zeta(x,y,t)$")
+    ax_vort.set_xlabel("$x$")
+    ax_vort.set_ylabel("$y$")
+
+    divider = make_axes_locatable(ax_vort)
+    cax = divider.append_axes('right', size='5%', pad=0.03)
+    fig.colorbar(im04, cax=cax, orientation='vertical')
+
     plt.show()
 
 
@@ -485,7 +535,8 @@ if __name__ == "__main__":
     # contour_plot_psi0()
     # contour_plot_zeta_0()
     # quiver_velocity_field()
+    init_subplot()
     # dyn_plot_velocity_field()
     # dyn_plot_zeta()
     # dyn_plot_psi()
-    dyn_subplot()
+    # dyn_subplot()
