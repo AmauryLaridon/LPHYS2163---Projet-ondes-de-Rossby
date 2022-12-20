@@ -29,11 +29,8 @@ g = 9.81  # norme de l'accélération gravitationnelle
 omega = 7.29215*10**(-5)  # vitesse angulaire de la rotation de la Terre
 save_count_value_T_12 = 286*(1/delta_t_en_heure)  # variable définis temps sauvegarde animation.
 enregistrement_pas_affich = True  # variable définis si on enregistre si on affiche les résultats.
-
-
-
-mean_flow_u = 0 * np.ones((N,M)) #Champ moyen de fond
-mean_flow_v = 0 * np.ones((N,M))
+mean_flow_u = 0 * np.ones((N, M))  # Champ moyen de fond dans la composante u
+mean_flow_v = 0 * np.ones((N, M))  # Champ moyen de fond dans la composante v
 
 ###################################################### Discrétisation des mailles ##################################################
 # Crée deux tableaux de taille NxM, l'un avec les valeurs discrétisée de x et l'autre de y
@@ -70,6 +67,17 @@ def psi_init():
     return psi_0
 
 
+def mean_flow_req_stat():
+    """Calcul la valeur du vent moyen zonal nécessaire pour avoir des ondes de Rossby stationnaires par rapport au sol"""
+    beta = beta_scal(phi_0)
+    k = (2*np.pi)/Wx
+    j = (2*np.pi)/Wy
+    K = np.sqrt((k**2)+(j**2))
+    U = beta/(K**2)
+    print("$U_c = {:.2f}$".format(U))
+    return U
+
+
 def zeta_init(psi):
     """Donne la composante verticale de la vorticité relative en fonction de la fonction de courant initiale à l'aide de l'équation(2)"""
     zeta = np.zeros((N, M))
@@ -82,21 +90,22 @@ def zeta_init(psi):
 
 
 def u(psi, mean_flow):
-	""" Donne la composante zonale du champ de vitesse en fonction de la fonction de courant, possibilité d'ajouter un champ moyen"""
-	u = np.zeros((N,M))
-	for i in range(N):
-		for l in range(M):
-			u[i,l] = (-1/(2*delta_s))*(psi[(i+1)%N,l] - psi[i-1,l]) + mean_flow[i,l]
-	return u
+    """ Donne la composante zonale du champ de vitesse en fonction de la fonction de courant, possibilité d'ajouter un champ moyen"""
+    u = np.zeros((N, M))
+    for i in range(N):
+        for l in range(M):
+            u[i, l] = (-1/(2*delta_s))*(psi[(i+1) % N, l] - psi[i-1, l]) + mean_flow[i, l]
+    return u
+
 
 def v(psi, mean_flow):
-	""" Donne la composante méridienne du champ de vitesse en fonction de la fonction de courant, possibilité d'ajouter un champ moyen"""
-	v = np.zeros((N,M))
-	for i in range(N):
-		for l in range(M):
-			v[i,l] = (1/(2*delta_s))*(psi[i,(l+1)%M] - psi[i,l-1]) + mean_flow[i,l]
+    """ Donne la composante méridienne du champ de vitesse en fonction de la fonction de courant, possibilité d'ajouter un champ moyen"""
+    v = np.zeros((N, M))
+    for i in range(N):
+        for l in range(M):
+            v[i, l] = (1/(2*delta_s))*(psi[i, (l+1) % M] - psi[i, l-1]) + mean_flow[i, l]
 
-	return v
+    return v
 
 
 def vort_flux(zeta, u, v):
@@ -121,73 +130,74 @@ def zeta(F, zeta):
             new_zeta[i, l] = -F[i, l] * 2 * delta_t + zeta[i, l]
     return new_zeta
 
-def traceur( u, v, dt):
-	"""
-		Lache des traceurs dans l'atmosphère et regarde leurs parcours en fonction du vent à un temps donné. u et v sont les matrices des vents
-		au temps qui nous intéresse, dt est le pas de temps pour animer les traceurs il doit être de l'ordre de grandeurs des vitesses u et v.
-	"""
-	matrice_traceur = np.zeros((N,M))
-	nb_traceurs = 0
-	
-	"""
-		On trace ici la forme qui va être déformée, ici c'est une grille.
-	"""
-	for i in range(N):
-		for l in range(M):
-			if i == int(N/4) or i == int(2*N/4) or i == int(3*N/4):
-				matrice_traceur[i,l] = 1
-				nb_traceurs += 1
-			if l == int(M/4)  or l == int(2*M/4) or l == int(3*M/4):
-				matrice_traceur[i,l] = 1
-				nb_traceurs += 1 
 
-	matrice_tot = [matrice_traceur]
+def traceur(u, v, dt):
+    """Lache des traceurs dans l'atmosphère et regarde leurs parcours en fonction du vent à un temps donné. u et v sont
+    les matrices des vents u temps qui nous intéresse, dt est le pas de temps pour animer les traceurs
+    il doit être de l'ordre de grandeurs des vitesses u et v."""
 
-	x_trace = np.zeros((nb_traceurs,1))
-	y_trace = np.zeros((nb_traceurs,1))
-	m = 0
-	for i in range(N):
-		for l in range(M):
-			if matrice_traceur[i,l] == 1:
-				x_trace[m,0] = l
-				y_trace[m,0] = i
-				m += 1
+    matrice_traceur = np.zeros((N, M))
+    nb_traceurs = 0
 
-	new_x_trace = np.zeros((nb_traceurs,1))
-	new_y_trace = np.zeros((nb_traceurs,1))
+    # On trace ici la forme qui va être déformée, ici c'est une grille.
+    for i in range(N):
+        for l in range(M):
+            if i == int(N/4) or i == int(2*N/4) or i == int(3*N/4):
+                matrice_traceur[i, l] = 1
+                nb_traceurs += 1
+            if l == int(M/4) or l == int(2*M/4) or l == int(3*M/4):
+                matrice_traceur[i, l] = 1
+                nb_traceurs += 1
 
-	for t in range(1000):
-		for m in range(nb_traceurs):
-			new_x_trace[m,0] = ((x_trace[m,0] * delta_s + u[int(y_trace[m,0]),int(x_trace[m,0])] * dt)%Lx)/delta_s
-			new_y_trace[m,0] = ((y_trace[m,0] * delta_s + v[int(y_trace[m,0]),int(x_trace[m,0])] * dt)%Ly)/delta_s
-		x_trace = new_x_trace
-		y_trace = new_y_trace		
-		matrice_traceur = np.zeros((N,M))
+    matrice_tot = [matrice_traceur]
 
-		for m in range(nb_traceurs):
-			matrice_traceur[int(y_trace[m,0]), int(x_trace[m,0])] = 1
+    x_trace = np.zeros((nb_traceurs, 1))
+    y_trace = np.zeros((nb_traceurs, 1))
+    m = 0
+    for i in range(N):
+        for l in range(M):
+            if matrice_traceur[i, l] == 1:
+                x_trace[m, 0] = l
+                y_trace[m, 0] = i
+                m += 1
 
-		matrice_tot.append(matrice_traceur)
+    new_x_trace = np.zeros((nb_traceurs, 1))
+    new_y_trace = np.zeros((nb_traceurs, 1))
 
-	#affichage 
+    for t in range(1000):
+        for m in range(nb_traceurs):
+            new_x_trace[m, 0] = (
+                (x_trace[m, 0] * delta_s + u[int(y_trace[m, 0]), int(x_trace[m, 0])] * dt) % Lx)/delta_s
+            new_y_trace[m, 0] = (
+                (y_trace[m, 0] * delta_s + v[int(y_trace[m, 0]), int(x_trace[m, 0])] * dt) % Ly)/delta_s
+        x_trace = new_x_trace
+        y_trace = new_y_trace
+        matrice_traceur = np.zeros((N, M))
 
-	fig = plt.figure()
-	im = plt.imshow(matrice_tot[0], interpolation='nearest', cmap='Blues')
+        for m in range(nb_traceurs):
+            matrice_traceur[int(y_trace[m, 0]), int(x_trace[m, 0])] = 1
 
-	def update(data):
-			im.set_array(data)
-	def data_gen(n):
-		for n in range(n):
-			plt.title('{}h'.format(round(n*dt/3600,1)))
-			yield matrice_tot[n]
-	ani = animation.FuncAnimation(fig, update, data_gen(1000), interval=0)
+        matrice_tot.append(matrice_traceur)
 
-	plt.show()
-	for i in range(6):
-		plt.subplot(2,3,i+1)
-		plt.imshow(matrice_tot[100*i])
-		plt.title('t = {}h'.format(round(100*i*dt/3600,1)))
-	plt.show()
+    # affichage
+    fig = plt.figure()
+    im = plt.imshow(matrice_tot[0], interpolation='nearest', cmap='Blues')
+
+    def update(data):
+        im.set_array(data)
+
+    def data_gen(n):
+        for n in range(n):
+            plt.title('{}h'.format(round(n*dt/3600, 1)))
+            yield matrice_tot[n]
+    ani = animation.FuncAnimation(fig, update, data_gen(1000), interval=0)
+
+    plt.show()
+    for i in range(6):
+        plt.subplot(2, 3, i+1)
+        plt.imshow(matrice_tot[100*i])
+        plt.title('t = {}h'.format(round(100*i*dt/3600, 1)))
+    plt.show()
 
 
 """
@@ -625,3 +635,5 @@ if __name__ == "__main__":
     dyn_plot_zeta()
     dyn_plot_psi()
     # dyn_subplot()
+    # traceur()
+    # mean_flow_req_stat()
