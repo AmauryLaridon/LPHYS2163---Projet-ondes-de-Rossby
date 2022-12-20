@@ -132,14 +132,16 @@ def zeta(F, zeta):
 
 
 def traceur(u, v, dt):
-    """Lache des traceurs dans l'atmosphère et regarde leurs parcours en fonction du vent à un temps donné. u et v sont
-    les matrices des vents u temps qui nous intéresse, dt est le pas de temps pour animer les traceurs
-    il doit être de l'ordre de grandeurs des vitesses u et v."""
-
+    """
+            Lache des traceurs dans l'atmosphère et regarde leurs parcours en fonction du vent à un temps donné. u et v sont les matrices des vents
+            au temps qui nous intéresse, dt est le pas de temps pour animer les traceurs il doit être de l'ordre de grandeurs des vitesses u et v.
+    """
     matrice_traceur = np.zeros((N, M))
     nb_traceurs = 0
 
-    # On trace ici la forme qui va être déformée, ici c'est une grille.
+    """
+		On trace ici la forme qui va être déformée, ici c'est une grille.
+	"""
     for i in range(N):
         for l in range(M):
             if i == int(N/4) or i == int(2*N/4) or i == int(3*N/4):
@@ -158,7 +160,7 @@ def traceur(u, v, dt):
         for l in range(M):
             if matrice_traceur[i, l] == 1:
                 x_trace[m, 0] = l
-                y_trace[m, 0] = i
+                y_trace[m, 0] = N - (i + 1)
                 m += 1
 
     new_x_trace = np.zeros((nb_traceurs, 1))
@@ -175,11 +177,12 @@ def traceur(u, v, dt):
         matrice_traceur = np.zeros((N, M))
 
         for m in range(nb_traceurs):
-            matrice_traceur[int(y_trace[m, 0]), int(x_trace[m, 0])] = 1
+            matrice_traceur[N - (int(y_trace[m, 0])+1), int(x_trace[m, 0])] = 1
 
         matrice_tot.append(matrice_traceur)
 
     # affichage
+
     fig = plt.figure()
     im = plt.imshow(matrice_tot[0], interpolation='nearest', cmap='Blues')
 
