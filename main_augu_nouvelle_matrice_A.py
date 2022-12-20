@@ -341,11 +341,11 @@ def dyn_plot_velocity_field():
             plt.pause(100)
         u_anim = u_tot[t]
         v_anim = v_tot[t]
-        #vector_anim_max_vel = np.hypot(u_anim, v_anim)
+        # vector_anim_max_vel = np.hypot(u_anim, v_anim)
 
         # print(vector_anim_max_vel)
-        title("$(u(x,y,t), v(x,y,t)), t ={:.2f}h, jours = {}$ \n $L_x = {}km, L_y = {}km, \Delta_s = {}km, W_x = {}km, W_y = {}km$ \n $T = {}\;  jours, \Delta_t = {}h $ ".format(
-            t*(delta_t/3600), int(t*delta_t_en_heure/24), int(Lx/1000), int(Ly/1000), int(delta_s/1000), int(Wx/1000), int(Wy/1000), int(temps_integration_en_jour), int(delta_t/3600)), fontsize=8)
+        title("$(u(x,y,t), v(x,y,t)), t ={:.2f}h, jours = {}$ \n $L_x = {}km, L_y = {}km, \Delta_s = {}km, W_x = {}km, W_y = {}km$ \n $T = {}\;  jours, \Delta_t = {:.2f}h $ ".format(
+            t*(delta_t/3600), int(t*delta_t_en_heure/24), int(Lx/1000), int(Ly/1000), int(delta_s/1000), int(Wx/1000), int(Wy/1000), int(temps_integration_en_jour), delta_t/3600, fontsize=8))
         xlabel("$x$")
         ylabel("$y$")
         plt.tight_layout()
@@ -379,8 +379,8 @@ def dyn_plot_zeta():
 
     def data_gen_zeta(n):
         for t in range(n):
-            title("$\zeta(x,y,t), t ={:.2f}h, jours = {}$ \n $L_x = {}km, L_y = {}km, \Delta_s = {}km, W_x = {}km, W_y = {}km$ \n $T = {}\;  jours, \Delta_t = {}h $ ".format(
-                t*(delta_t/3600), int(t*delta_t_en_heure/24), int(Lx/1000), int(Ly/1000), int(delta_s/1000), int(Wx/1000), int(Wy/1000), int(temps_integration_en_jour), int(delta_t/3600)), fontsize=8)
+            title("$\zeta(x,y,t), t ={:.2f}h, jours = {}$ \n $L_x = {}km, L_y = {}km, \Delta_s = {}km, W_x = {}km, W_y = {}km$ \n $T = {}\;  jours, \Delta_t = {:.2f}h $ ".format(
+                t*(delta_t/3600), int(t*delta_t_en_heure/24), int(Lx/1000), int(Ly/1000), int(delta_s/1000), int(Wx/1000), int(Wy/1000), int(temps_integration_en_jour), delta_t/3600), fontsize=8)
             xlabel("$x$")
             ylabel("$y$")
             plt.tight_layout()
@@ -410,8 +410,8 @@ def dyn_plot_psi():
 
     def data_gen(n):
         for n in range(n):
-            title("$\psi(x,y,t), t ={:.2f}h, jours = {}$ \n $L_x = {}km, L_y = {}km, \Delta_s = {}km, W_x = {}km, W_y = {}km$ \n $T = {}\;  jours, \Delta_t = {}h $ ".format(
-                n*(delta_t/3600), int(n*delta_t_en_heure/24), int(Lx/1000), int(Ly/1000), int(delta_s/1000), int(Wx/1000), int(Wy/1000), int(temps_integration_en_jour), int(delta_t/3600)), fontsize=10)
+            title("$\psi(x,y,t), t ={:.2f}h, jours = {}$ \n $L_x = {}km, L_y = {}km, \Delta_s = {}km, W_x = {}km, W_y = {}km$ \n $T = {}\;  jours, \Delta_t = {:.2f}h $ ".format(
+                n*(delta_t/3600), int(n*delta_t_en_heure/24), int(Lx/1000), int(Ly/1000), int(delta_s/1000), int(Wx/1000), int(Wy/1000), int(temps_integration_en_jour), delta_t/3600), fontsize=10)
             xlabel("$x$")
             ylabel("$y$")
             plt.tight_layout()
