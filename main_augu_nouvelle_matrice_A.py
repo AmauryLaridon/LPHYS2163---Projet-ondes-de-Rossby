@@ -19,7 +19,7 @@ Wy = 3000000  # longueurs d'onde champ initial selon y en mètre. Par défaut 3 
 delta_s = 200000  # résolution de la maille spatiale en mètre. Valeur par défaut = 200km
 delta_t_en_heure = 1
 delta_t = 3600 * delta_t_en_heure  # passage au SI
-temps_integration_en_jour = 4
+temps_integration_en_jour = 12
 temps_integration_en_seconde = 60 * 60 * 24 * temps_integration_en_jour  # passage au SI
 M = int(Lx/delta_s)  # nombre d'itération selon x
 N = int(Ly/delta_s)  # nombre d'itération selon y
@@ -27,6 +27,7 @@ nb_pas_de_temps = int(temps_integration_en_seconde/delta_t)
 rayon_terre = 6371000  # rayon moyen de la Terre en mètres
 g = 9.81  # norme de l'accélération gravitationnelle
 omega = 7.29215*10**(-5)  # vitesse angulaire de la rotation de la Terre
+enregistrement_pas_affich = True
 
 ###################################################### Discrétisation des mailles ##################################################
 # Crée deux tableaux de taille NxM, l'un avec les valeurs discrétisée de x et l'autre de y
@@ -353,11 +354,13 @@ def dyn_plot_velocity_field():
         Q, xvalues, yvalues), interval=200, blit=False, save_count=save_count_value_T_12)  # save_count = max 286 pour T = 12 jours avec delta_t = 1h, save_count = max 572 pour T = 12 jours et delta_t = 0.5h
     # fig.tight_layout()
 
-    # paramètres objet writers
-    Writer = writers['ffmpeg']
-    writer = Writer(fps=10, bitrate=-1)
-    ani.save('dyn_plot_velocity_field.mp4', writer)
-    # plt.show()
+    if enregistrement_pas_affich == True:
+        # paramètres objet writers
+        Writer = writers['ffmpeg']
+        writer = Writer(fps=10, bitrate=-1)
+        ani.save('dyn_plot_velocity_field.mp4', writer)
+    else:
+        plt.show()
 
 #################### Plot dynamique de zeta_dyn au cours du temps #################
 
@@ -382,11 +385,13 @@ def dyn_plot_zeta():
     ani = animation.FuncAnimation(fig, update1, data_gen_zeta(
         nb_pas_de_temps), interval=200, save_count=save_count_value_T_12)
 
-    # paramètres objet writers
-    Writer = writers['ffmpeg']
-    writer = Writer(fps=5, metadata={'artist': 'Me'}, bitrate=-1)
-    ani.save('dyn_plot_zeta.mp4', writer)
-    # plt.show()
+    if enregistrement_pas_affich == True:
+        # paramètres objet writers
+        Writer = writers['ffmpeg']
+        writer = Writer(fps=5, metadata={'artist': 'Me'}, bitrate=-1)
+        ani.save('dyn_plot_zeta.mp4', writer)
+    else:
+        plt.show()
 #################### Plot dynamique de psi_dyn au cours du temps #################
 
 
@@ -411,12 +416,14 @@ def dyn_plot_psi():
     ani = animation.FuncAnimation(fig, update, data_gen(
         nb_pas_de_temps), interval=200, save_count=save_count_value_T_12)
 
-    # paramètres objet writers
-    Writer = writers['ffmpeg']
-    writer = Writer(fps=5, metadata={'artist': 'Me'}, bitrate=-1)
-    name_file = 'dyn_plot_psi_delta_s_{}_delta_t_{}.mp4'.format(delta_s, delta_t)
-    ani.save('dyn_plot_psi.mp4', writer)
-    # plt.show()
+    if enregistrement_pas_affich == True:
+        # paramètres objet writers
+        Writer = writers['ffmpeg']
+        writer = Writer(fps=5, metadata={'artist': 'Me'}, bitrate=-1)
+        name_file = 'dyn_plot_psi_delta_s_{}_delta_t_{}.mp4'.format(delta_s, delta_t)
+        ani.save('dyn_plot_psi.mp4', writer)
+    else:
+        plt.show()
 
 
 def dyn_subplot():
@@ -535,8 +542,8 @@ if __name__ == "__main__":
     # contour_plot_psi0()
     # contour_plot_zeta_0()
     # quiver_velocity_field()
-    init_subplot()
-    # dyn_plot_velocity_field()
-    # dyn_plot_zeta()
-    # dyn_plot_psi()
+    # init_subplot()
+    dyn_plot_velocity_field()
+    dyn_plot_zeta()
+    dyn_plot_psi()
     # dyn_subplot()
