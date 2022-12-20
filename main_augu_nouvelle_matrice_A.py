@@ -27,7 +27,8 @@ nb_pas_de_temps = int(temps_integration_en_seconde/delta_t)
 rayon_terre = 6371000  # rayon moyen de la Terre en mètres
 g = 9.81  # norme de l'accélération gravitationnelle
 omega = 7.29215*10**(-5)  # vitesse angulaire de la rotation de la Terre
-enregistrement_pas_affich = True
+save_count_value_T_12 = 286*(1/delta_t_en_heure)  # variable définis temps sauvegarde animation.
+enregistrement_pas_affich = True  # variable définis si on enregistre si on affiche les résultats.
 
 ###################################################### Discrétisation des mailles ##################################################
 # Crée deux tableaux de taille NxM, l'un avec les valeurs discrétisée de x et l'autre de y
@@ -325,21 +326,24 @@ def init_subplot():
 
 ################################################ Affichage Intégration Numérique #############################################
 ############# Plot dynamique des vecteurs vitesses au cours du temps ####################
-save_count_value_T_12 = 286*(1/delta_t_en_heure)  # variable définis temps sauvegarde animation.
 
 
 def dyn_plot_velocity_field():
     u_anim = u_tot[0]
     v_anim = v_tot[0]
-
+    vels = np.hypot(u_0, v_0)
     fig, ax = plt.subplots(1, 1)
-    Q = ax.quiver(xvalues, yvalues, u_anim, v_anim, pivot='mid', color='r')
+    Q = ax.quiver(xvalues, yvalues, u_anim, v_anim, vels, pivot='mid', color='r')
+    plt.colorbar(Q)
 
     def update_quiver(t, Q, x, y):
         if t == (nb_pas_de_temps-1):
             plt.pause(100)
         u_anim = u_tot[t]
         v_anim = v_tot[t]
+        #vector_anim_max_vel = np.hypot(u_anim, v_anim)
+
+        # print(vector_anim_max_vel)
         title("$(u(x,y,t), v(x,y,t)), t ={:.2f}h, jours = {}$ \n $L_x = {}km, L_y = {}km, \Delta_s = {}km, W_x = {}km, W_y = {}km$ \n $T = {}\;  jours, \Delta_t = {}h $ ".format(
             t*(delta_t/3600), int(t*delta_t_en_heure/24), int(Lx/1000), int(Ly/1000), int(delta_s/1000), int(Wx/1000), int(Wy/1000), int(temps_integration_en_jour), int(delta_t/3600)), fontsize=8)
         xlabel("$x$")
@@ -424,6 +428,8 @@ def dyn_plot_psi():
         ani.save('dyn_plot_psi.mp4', writer)
     else:
         plt.show()
+
+#################### SubPlot dynamique des champs au cours du temps #################
 
 
 def dyn_subplot():
