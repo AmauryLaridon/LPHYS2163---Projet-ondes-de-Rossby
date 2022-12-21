@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import matplotlib.animation as animation
 
-
+test = 1
 Lx = 12000000
 Ly = 6000000
 delta_s = 100000
