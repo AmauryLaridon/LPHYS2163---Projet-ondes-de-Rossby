@@ -28,7 +28,7 @@ rayon_terre = 6371000  # rayon moyen de la Terre en mètres
 g = 9.81  # norme de l'accélération gravitationnelle
 omega = 7.29215*10**(-5)  # vitesse angulaire de la rotation de la Terre
 save_count_value_T_12 = 286*(1/delta_t_en_heure)  # variable définis temps sauvegarde animation.
-enregistrement_pas_affich = True  # variable définis si on enregistre si on affiche les résultats.
+enregistrement_pas_affich = False  # variable définis si on enregistre si on affiche les résultats.
 mean_flow_u = 0 * np.ones((N, M))  # champ moyen de fond dans la composante u
 mean_flow_v = 0 * np.ones((N, M))  # champ moyen de fond dans la composante v
 beta_plane_approx = True  # encode si on est dans l'approximation du plan-beta ou non
@@ -635,13 +635,13 @@ if __name__ == "__main__":
     zeta_tot = solution[2]
     psi_tot = solution[3]
     ### Affichage Solutions ###
-    # contour_plot_psi0()
-    # contour_plot_zeta_0()
-    # quiver_velocity_field()
-    # init_subplot()
+    contour_plot_psi0()
+    contour_plot_zeta_0()
+    quiver_velocity_field()
+    init_subplot()
     dyn_plot_velocity_field()
     dyn_plot_zeta()
     dyn_plot_psi()
     # dyn_subplot()
-    # traceur(u_0, v_0, 100)
+    traceur(u_0, v_0, 100)
     # mean_flow_req_stat()
