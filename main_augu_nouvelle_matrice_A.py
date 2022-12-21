@@ -59,7 +59,7 @@ def beta_scal(phi):
 
 
 def psi_init():
-    """Donne une condition initiale pour la fonction psi_0"""
+    """Donne la condition initiale de référence pour la fonction psi_0"""
     k = (2*np.pi)/Wx
     j = (2*np.pi)/Wy
     x = np.arange(0, Lx, delta_s)  # discrétisation de l'axe horizontal
@@ -121,7 +121,7 @@ Prend comme argument la matrice de la composante selon x du champ de vitesse, pu
     for i in range(N):
         for l in range(M):
             vort_flux[i, l] = (1/(2*delta_s))*(zeta[i, (l+1) % M]*u[i, (l+1) % M] - zeta[i, l-1] *
-                                               u[i, l-1] + zeta[(i+1) % N, l]*v[(i+1) % N, l] - zeta[i-1, l]*v[i-1, l]) + beta_scal(phi_0) * v[i, l]
+                                               u[i, l-1] + zeta[(i+1) % N, l]*v[(i+1) % N, l] - zeta[i-1, l]*v[i-1, l]) + beta_scal(phi_0) * v[i, l] + beta_scal(phi_0) * mean_flow_v[i, l]
 
     return vort_flux
 
@@ -643,5 +643,5 @@ if __name__ == "__main__":
     dyn_plot_zeta()
     dyn_plot_psi()
     # dyn_subplot()
-    # traceur()
+    # traceur(u_0, v_0, 100)
     # mean_flow_req_stat()
