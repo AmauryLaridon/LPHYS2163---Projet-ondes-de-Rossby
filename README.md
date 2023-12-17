@@ -1,13 +1,13 @@
-# LPHYS2163---Projet-ondes-de-Rossby
+# LPHYS2163---Rossby-wave-project
 
-Ce projet a été réalisé par Élise Francoisse, Augustin Lambotte et Amaury Laridon pour le cours LPHYS2163 : Atmosphere and ocean - physics and dynamics.
-Le but est de simuler des ondes de Rossby dans l'atmosphère.
+This project was carried out by Élise Francoisse, Augustin Lambotte and Amaury Laridon for the course LPHYS2163: Atmosphere and ocean - physics and dynamics.
+The goal is to simulate Rossby waves in the atmosphere.
 
-Les consignes du projet avec plus d'explication sur le cadre imposé pour l'implémentation numérique se trouve dans le document : Project2_LPHYS2163.pdf
+The project instructions with more explanation on the framework imposed for the digital implementation can be found in the document: Project2_LPHYS2163.pdf
 
-Le rapport du projet mettant en avant les résultats clefs ainsi que différentes analyses de sensibilité se trouve à l'adresse suivante : https://fr.overleaf.com/read/rstmtfpgtwhn
+The project report highlighting the key results as well as various sensitivity analyzes can be found at the following address: https://fr.overleaf.com/read/rstmtfpgtwhn
 
-Le code exécutable écrit en python se trouve dans le fichier simu.py
-Les variables ont toutes été déplacées au début du code et l'utilisation de fonctions a été faite au maximum afin de pouvoir facilement décider du scénario dans lequel on veut lancer la simulation. Les variables et différents éléments du code sont normalement suffisemment documentés et commentés que pour pouvoir le faire tourner facilement. Les différentes fonctions d'affichages finales que l'utilisateur décide ou non d'activer se trouve tout à la fin du code dans la partie "exécutable".  
+The executable code written in python can be found in the simu.py file
+The variables have all been moved to the beginning of the code and the use of functions has been made as much as possible in order to be able to easily decide the scenario in which we want to run the simulation. The variables and different elements of the code are normally sufficiently documented and commented to be able to run it easily. The different final display functions that the user decides to activate or not can be found at the very end of the code in the “executable” part.
 
-Toutes les différentes figures et animations jugées intéressantes au cours des différents tests on été classées dans les dossiers du même nom.
+All the different figures and animations deemed interesting during the various tests were classified in the files of the same name.
