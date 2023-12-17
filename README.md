@@ -1,5 +1,8 @@
 # LPHYS2163---Rossby-wave-project
 
+![image](https://github.com/AmauryLaridon/LPHYS2163---Projet-ondes-de-Rossby/assets/58213378/7e198e14-e3d7-4f56-8f3d-cd6118fff65e)
+
+
 This project was carried out by Élise Francoisse, Augustin Lambotte and Amaury Laridon for the course LPHYS2163: Atmosphere and ocean - physics and dynamics.
 The goal is to simulate Rossby waves in the atmosphere.
 
